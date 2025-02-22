@@ -3,7 +3,7 @@ site_url: https://scottcheung930.github.io/Scott930Website/
 theme:
   name: material
   logo: assets/logo.jpg
-  favicon: assets/logo.jpg
+  favicon: images/logo.jpg
   palette: 
 
     # Palette toggle for light mode
