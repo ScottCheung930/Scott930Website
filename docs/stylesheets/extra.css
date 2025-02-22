@@ -1,0 +1,43 @@
+html {
+    overflow-y: scroll;
+}
+
+/* Adjust the selector if your theme uses a different one (e.g. .md-header) */
+.md-header {
+    background-image: url("../assets/images/header-bg.png");
+    height: 60px;
+    overflow: hidden;
+    transition: height 0.5s ease;
+    background-size: cover;
+}
+
+/* Create a black overlay */
+.md-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* shorthand for top:0; right:0; bottom:0; left:0; */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* 50% black */
+    pointer-events: none;
+    /* allow clicks to pass through */
+    transition: background-color 0.5s ease;
+}
+
+.md-header.expanded {
+    height: 45vw;
+    /* expanded height – adjust as needed */
+}
+
+/* When expanded, remove the shade */
+.md-header.expanded::before {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+
+.md-header nav {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+}

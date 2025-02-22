@@ -3,7 +3,7 @@ site_url: https://scottcheung930.github.io/Scott930Website/
 theme:
   name: material
   logo: assets/logo.png
-  favicon: images/logo.png
+  favicon: assets/images/logo.png
   palette: 
 
     # Palette toggle for light mode
@@ -17,3 +17,8 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  language: zh
+extra_css:
+  - stylesheets/extra.css
+extra_javascript:
+  - javascripts/extra.js
