@@ -42,8 +42,7 @@ window.addEventListener('load', function () {
     header.addEventListener('touchend', () => {
         // Reset the starting touch position.
         startY = null;
-        // Optionally, you could also remove the expanded class here if you want it to collapse after the touch ends.
-        // header.classList.remove('expanded');
+        header.classList.remove('expanded');
     });
 });
 
