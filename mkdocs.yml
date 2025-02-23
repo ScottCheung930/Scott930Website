@@ -1,6 +1,8 @@
 site_name: Scott930
 site_url: https://scottcheung930.github.io/Scott930Website/
 theme:
+  name: material
+  custom_dir: overrides
   features: 
     - navigation.instant
     - navigation.instant.preview
@@ -10,7 +12,6 @@ theme:
     - navigation.path
     - navigation.prune
     - navigation.indexes
-  name: material
   logo: assets/logo.png
   favicon: assets/images/logo.png
   palette: 
