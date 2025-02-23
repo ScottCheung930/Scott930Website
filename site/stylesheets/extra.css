@@ -1,0 +1,75 @@
+html {
+    overflow-y: scroll;
+}
+
+/* Adjust the selector if your theme uses a different one (e.g. .md-header) */
+/* For light mode */
+body[data-md-color-scheme="default"] .md-header{
+    background-image: url("../assets/images/header-bg-light.png");
+}
+
+body[data-md-color-scheme="default"] .md-header__inner {
+    color: darkslategray;
+}
+
+/* For light mode */
+body[data-md-color-scheme="slate"] .md-header{
+    background-image: url("../assets/images/header-bg-dark.png");
+}
+
+.md-header{
+    height: 120px;
+    overflow: visible;
+    transition: height 0.5s ease;
+    background-size: cover;
+}
+
+
+/* Create a black overlay */
+.md-header::before {
+    position: absolute;
+    inset: 0;
+    /* shorthand for top:0; right:0; bottom:0; left:0; */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* 50% black */
+    pointer-events: none;
+    /* allow clicks to pass through */
+    transition: background-color 0.5s ease;
+}
+
+.md-header.expanded {
+    height: 45vw;
+    /* expanded height – adjust as needed */
+}
+
+/* When expanded, remove the shade */
+.md-header.expanded::before {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+
+nav.md-header__inner {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    
+}
+nav.md-tabs {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+nav.md-tabs::before {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+body>div.md-container>main>div>div.md-sidebar.md-sidebar--primary>div>div>nav>label {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+body>header>nav.md-header__inner.md-grid>div.md-search>div>div {
+    z-index: 9999;
+}
