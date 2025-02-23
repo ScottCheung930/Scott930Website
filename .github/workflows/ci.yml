@@ -28,5 +28,5 @@ jobs:
       - run: pip install mkdocs-material
       - run: mkdocs build
       - name: Create CNAME file in site folder
-        run: echo "scott930.top" > site/CNAME
+        run: echo "scott930.top" > $GITHUB_WORKSPACE/site/CNAME
       - run: mkdocs gh-deploy --force
