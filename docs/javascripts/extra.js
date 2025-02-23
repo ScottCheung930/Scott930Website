@@ -1,25 +1,49 @@
 window.addEventListener('load', function () {
     const header = document.querySelector('header.md-header');
-    console.log(header);  // This will print the header element to the console for debugging
-    console.log("!!");
     let isHovered = false;
 
     header.addEventListener('mouseenter', () => isHovered = true);
     header.addEventListener('mouseleave', () => {
         isHovered = false;
         header.classList.remove('expanded');
-        console.log("mouseleave!!!");
     });
 
 
     header.addEventListener('wheel', (e) => {
-        console.log("wheel event:", e.deltaY);
         // If deltaY is negative, the user is scrolling up
         if (isHovered && e.deltaY < 0) {
             header.classList.add('expanded');
         } else {
             header.classList.remove('expanded');
         }
+    });
+
+    header.addEventListener('dblclick', () => {
+        header.classList.toggle('expanded');
+    });
+
+    // For mobile: detect drag down gesture
+    header.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            startY = e.touches[0].clientY;
+        }
+    });
+
+    header.addEventListener('touchmove', (e) => {
+        if (startY !== null) {
+            const currentY = e.touches[0].clientY;
+            // If the user has dragged down more than 50px, expand the header
+            if (currentY - startY > 50) {
+                header.classList.add('expanded');
+            }
+        }
+    });
+
+    header.addEventListener('touchend', () => {
+        // Reset the starting touch position.
+        startY = null;
+        // Optionally, you could also remove the expanded class here if you want it to collapse after the touch ends.
+        // header.classList.remove('expanded');
     });
 });
 

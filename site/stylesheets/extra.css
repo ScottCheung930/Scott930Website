@@ -5,6 +5,7 @@ html {
 /* Adjust the selector if your theme uses a different one (e.g. .md-header) */
 /* For light mode */
 body[data-md-color-scheme="default"] .md-header{
+    background-color: rgba(255, 255, 255, 0.5);
     background-image: url("../assets/images/header-bg-light.png");
 }
 
@@ -14,6 +15,7 @@ body[data-md-color-scheme="default"] .md-header__inner {
 
 /* For light mode */
 body[data-md-color-scheme="slate"] .md-header{
+    background-color: rgba(0, 0, 0, 0.5);
     background-image: url("../assets/images/header-bg-dark.png");
 }
 
