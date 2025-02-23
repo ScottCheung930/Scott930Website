@@ -1,5 +1,14 @@
 site_name: Scott930
 site_url: https://scottcheung930.github.io/Scott930Website/
+
+nav:
+  - 首页: index.md
+  - 通信:
+      - communication/index.md
+  - 代码:
+      - coding/index.md
+  - 杂记:
+      - notes/index.md
 theme:
   name: material
   custom_dir: overrides
@@ -10,7 +19,6 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.path
-    - navigation.prune
     - navigation.indexes
   logo: assets/logo.png
   favicon: assets/images/logo.png
