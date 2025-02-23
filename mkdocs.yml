@@ -9,6 +9,7 @@ theme:
     - navigation.tabs.sticky
     - navigation.path
     - navigation.prune
+    - navigation.indexes
   name: material
   logo: assets/logo.png
   favicon: assets/images/logo.png

@@ -8,6 +8,10 @@ body[data-md-color-scheme="default"] .md-header{
     background-image: url("../assets/images/header-bg-light.png");
 }
 
+body[data-md-color-scheme="default"] .md-header__inner {
+    color: darkslategray;
+}
+
 /* For light mode */
 body[data-md-color-scheme="slate"] .md-header{
     background-image: url("../assets/images/header-bg-dark.png");
@@ -15,7 +19,7 @@ body[data-md-color-scheme="slate"] .md-header{
 
 .md-header{
     height: 120px;
-    overflow: hidden;
+    overflow: visible;
     transition: height 0.5s ease;
     background-size: cover;
 }
@@ -23,7 +27,6 @@ body[data-md-color-scheme="slate"] .md-header{
 
 /* Create a black overlay */
 .md-header::before {
-    content: "";
     position: absolute;
     inset: 0;
     /* shorthand for top:0; right:0; bottom:0; left:0; */
@@ -50,6 +53,7 @@ nav.md-header__inner {
     bottom: 60px;
     left: 0;
     right: 0;
+    
 }
 nav.md-tabs {
     position: absolute;
@@ -61,4 +65,11 @@ nav.md-tabs {
 
 nav.md-tabs::before {
     background-color: rgba(0, 0, 0, 0.4);
+}
+body>div.md-container>main>div>div.md-sidebar.md-sidebar--primary>div>div>nav>label {
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+body>header>nav.md-header__inner.md-grid>div.md-search>div>div {
+    z-index: 9999;
 }
