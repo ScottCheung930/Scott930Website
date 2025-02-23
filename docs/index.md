@@ -1,19 +1,5 @@
-# Welcome to MkDocs
+# Scott930的个人网站~
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+## 应该会做一些通信相关的笔记
 
-## Commands
-
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
-
-## Add something
+## 还有一些学习代码的笔记
