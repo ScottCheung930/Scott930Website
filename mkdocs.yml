@@ -7,8 +7,14 @@ nav:
       - communication/index.md
   - 代码:
       - coding/index.md
+      - c++: coding/c++.md
   - 杂记:
       - notes/index.md
+      - 毕设: 
+        - notes/masterThesis/index.md
+        - notes/masterThesis/2025-02-02.md
+        - notes/masterThesis/2025-02-07.md 
+        - notes/masterThesis/2025-02-23.md
 theme:
   name: material
   custom_dir: overrides
