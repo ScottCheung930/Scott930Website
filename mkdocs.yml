@@ -19,14 +19,19 @@ theme:
   name: material
   custom_dir: overrides
   features: 
-    - navigation.instant
-    - navigation.instant.preview
-    - navigation.instant.prefetch
+    # 不使用instant mode，因为会导致数学公式渲染失败
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.path
     - navigation.indexes
+    - content.code.annotate
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.tooltips
   logo: assets/logo.png
+  icon:
+    annotation: material/plus-circle
   favicon: assets/images/logo.png
   palette: 
     # Palette toggle for light mode
@@ -43,8 +48,12 @@ theme:
   language: zh
 extra_css:
   - stylesheets/extra.css
+  - https://unpkg.com/katex@0/dist/katex.min.css
 extra_javascript:
   - javascripts/extra.js
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
 
 # 以下配置，参考 c01dkit https://github.com/c01dkit/tech-blog/blob/main/mkdocs.yml
 #             和 Xiaokang2022 https://github.com/oh-my-mkdocs/oh-my-mkdocs/blob/main/mkdocs.yml
@@ -71,7 +80,7 @@ markdown_extensions:
   - attr_list # Markdown 元素可添加 HTML 和 CSS 属性
   # - def_list # 定义列表
   - footnotes # 脚注
-  # - md_in_html # Markdown 元素可内嵌在 HTML 中
+  - md_in_html # Markdown 元素可内嵌在 HTML 中
   # - tables # 表格
 
   # - fenced_code # 代码块，被 pymdownx.superfences 完全替代且【冲突】
@@ -81,7 +90,7 @@ markdown_extensions:
 
   - admonition # 提示框
   - meta # 元数据
-  - sane_lists # 理智列表，避免原版 Markdown 列表错误渲染
+  # - sane_lists # 理智列表，避免原版 Markdown 列表错误渲染
   - smarty # 优化部分字符串为特殊符号
   - wikilinks # 快捷链接
 
@@ -120,7 +129,7 @@ markdown_extensions:
   - pymdownx.caret # 文本下划线及上标
   - pymdownx.tilde # 文本删除线及下标
   - pymdownx.betterem # 斜体与粗体优化，更好的嵌套使用
-
+  - pymdownx.superfences
   - pymdownx.arithmatex: # 数学表达式
       generic: true
 
@@ -180,3 +189,4 @@ markdown_extensions:
 plugins: 
   - search
   - statistics
+  - meta

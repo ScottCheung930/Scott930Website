@@ -18,7 +18,17 @@ window.addEventListener('load', function () {
         }
     });
 
-    header.addEventListener('dblclick', () => {
+    header.addEventListener('dblclick', (e) => {
+        // If the dblclick happens on any disallowed element, do nothing.
+        const disallowed = e.target.closest(
+            'nav.md-header__inner .md-header__source, ' +
+            'nav.md-header__inner .md-search, ' +
+            'nav.md-header__inner form, ' +
+            'nav.md-header__inner label:nth-child(2), ' +
+            'nav.md-header__inner a'
+        );
+        if (disallowed) return;
+        
         header.classList.toggle('expanded');
     });
 });
