@@ -178,6 +178,18 @@ x.pop_front();
 x.erase(pos1,pos2)
 ```
 
+???+ Note
+    关于选择不同的类型
+    - vector 永远是默认选项
+
+    - 需要随机访问elements，vector和deque更好
+
+    - list和forward_list有存储指针的额外内存开销以及存储在堆，当elements很小又很多，且需要管理内存额外开销时，避免list
+
+    - 当需要频繁在array中间插入，list和forward_list更好
+
+    - 需要在array两侧插入，deque更好。需要注意在front端删除时vector和deque区别不大，但在front端插入时vector不好。
+
 iterator的使用：
 双向链表的iterator不存在内秉的大于小于关系！
 ```cpp
@@ -195,14 +207,32 @@ while(it1!=it2){
     ...
 } 
 ```
-
 !!! Note
-    关于选择不同的类型
-    - vector 永远是默认选项
-    - 需要随机访问elements，vector和deque更好
-    - list和forward_list有存储指针的额外内存开销以及存储在堆，当elements很小又很多，且需要管理内存额外开销时，避免list
-    - 当需要频繁在array中间插入，list和forward_list更好
-    - 需要在array两侧插入，deque更好。需要注意在front端删除时vector和deque区别不大，但在front端插入时vector不好。
+    容器都有迭代器，因为总是需要遍历操作
+
+用iterator复制:
+```c++
+#include <iostream>
+#include <algorithm>
+#include <list>
+#include <vector>
+using namespace std;
+int main()
+{
+    list<int> lst(100, 1);
+    vector<int> v(100);
+    copy(lst.begin(),
+         lst.end(),
+         v.begin());
+    vector<int>::iterator it;
+    for(it=v.begin(); it!=v.end(); it++){
+        cout << *it << " ";
+    }
+    return 0;
+}
+```
+
+
 
 ### map
 
