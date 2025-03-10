@@ -15,6 +15,7 @@ nav:
         - notes/masterThesis/2025-02-02.md
         - notes/masterThesis/2025-02-07.md 
         - notes/masterThesis/2025-02-23.md
+        - notes/masterThesis/2025-03-09.md
 theme:
   name: material
   custom_dir: overrides
