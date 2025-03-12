@@ -23,6 +23,8 @@ theme:
     # 不使用instant mode，因为会导致数学公式渲染失败
     - navigation.tabs
     - navigation.tabs.sticky
+    - navigation.tabs.prune
+    - navigation.expand
     - navigation.path
     - navigation.indexes
     - content.code.annotate
