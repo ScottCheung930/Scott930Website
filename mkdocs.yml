@@ -16,6 +16,8 @@ nav:
         - notes/masterThesis/2025-02-07.md 
         - notes/masterThesis/2025-02-23.md
         - notes/masterThesis/2025-03-09.md
+      - QQ机器人:
+        - notes/qqBot/index.md
 theme:
   name: material
   custom_dir: overrides
