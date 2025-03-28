@@ -2,6 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://scottcheung930.github.io/Scott930Website/</loc>
-         <lastmod>2025-02-23</lastmod>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/coding/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/coding/c%2B%2B/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/communication/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/masterThesis/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/masterThesis/2025-02-02/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/masterThesis/2025-02-07/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/masterThesis/2025-02-23/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/masterThesis/2025-03-09/</loc>
+         <lastmod>2025-03-15</lastmod>
+    </url>
+    <url>
+         <loc>https://scottcheung930.github.io/Scott930Website/notes/qqBot/</loc>
+         <lastmod>2025-03-15</lastmod>
     </url>
 </urlset>

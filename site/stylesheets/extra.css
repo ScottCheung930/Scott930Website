@@ -2,6 +2,9 @@ html {
     overflow-y: scroll;
 }
 
+:root {
+    --md-tooltip-width: 600px;
+}
 /* Adjust the selector if your theme uses a different one (e.g. .md-header) */
 /* For light mode */
 body[data-md-color-scheme="default"] .md-header{
@@ -55,8 +58,16 @@ nav.md-header__inner {
     bottom: 60px;
     left: 0;
     right: 0;
-    
+    -webkit-user-select: none;
+    /* Safari */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* IE 10+ */
+    user-select: none;
+    /* Standard */
 }
+
 nav.md-tabs {
     position: absolute;
     bottom: 0px;
@@ -67,6 +78,17 @@ nav.md-tabs {
 
 nav.md-tabs::before {
     background-color: rgba(0, 0, 0, 0.4);
+}
+
+nav.md-tabs a {
+    -webkit-user-select: none;
+    /* Safari */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* IE 10+ */
+    user-select: none;
+    /* Standard */
 }
 body>div.md-container>main>div>div.md-sidebar.md-sidebar--primary>div>div>nav>label {
     background-color: rgba(0, 0, 0, 0.9);
