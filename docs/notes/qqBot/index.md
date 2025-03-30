@@ -62,32 +62,32 @@ koishijs/koishi
 ### 安装并配置qq所需的koishi插件
 点击“依赖管理”，然后点击小火箭，再点勾，再点击确认安装
 
->    ![更新依赖](../../assets/images/1.jpg)
+>    ![更新依赖](1.jpg)
 
 随后点击“插件市场”
 
->    ![插件市场](../../assets/images/2.jpg)
+>    ![插件市场](2.jpg)
 
 在插件市场里搜索```adapter-onebot```，而后待添加并安装。onebot是一个聊天机器人的开源接口协议，NapCat应该属于其中的一种。
 
->    ![Adapter-onebot](../../assets/images/3.jpg)
+>    ![Adapter-onebot](3.jpg)
 
 安装之后koishi会刷新一下，再进入插件市场，点击刚才的插件，点击“配置”
 
->    ![配置插件](../../assets/images/4.jpg)
->    ![配置插件2](../../assets/images/5.jpg)
+>    ![配置插件](4.jpg)
+>    ![配置插件2](5.jpg)
 
 如图配置，输入qq号，protocol选择ws-reverse，path为```/onebot```
 
 ### 配置NapCat
 启用反向WebSocket服务，反向Websocket监听地址为```ws:///<服务器公网ip>:5140/onebot```
 
->    ![配置NapCat](../../assets/images/6.jpg)
+>    ![配置NapCat](6.jpg)
 
 此时若一切正常，使用```docker attach napcat```后不会有error，否则日志会显示napcat会不断尝试连接反向Websocket；
 
 以及在koishi的webui的右下角会亮绿灯，且能看到自己qq头像：
->    ![配置NapCat2](../../assets/images/7.jpg)
+>    ![配置NapCat2](7.jpg)
 
 这步之后，Koishi就能向napcat发消息，napcat就会用qq小号输出来自Koishi的消息。
 
@@ -97,7 +97,7 @@ koishijs/koishi
 
 向qq小号发送 aecho 1 [测试字符串]，若功能正常，会回复 [测试字符串]，如下图：
 
->    ![测试](../../assets/images/8.jpg)
+>    ![测试](8.jpg)
 
 后面的基本就来自于koishi和[ChatLuna](https://chatluna.chat/guide/getting-started.html)官方文档了
 
@@ -110,7 +110,7 @@ koishijs/koishi
 将刚才的api放入chatluna-deepseek-adapter的配置-请求选项内
 注意如果插件商城里搜不到deepseek-adapter，可能需要换源，如下图
 
->    ![koishi插件商城源](../../assets/images/9.jpg)
+>    ![koishi插件商城源](9.jpg)
 
 https://kp.itzdrli.cc是一个比较好的源
 
@@ -122,4 +122,4 @@ https://kp.itzdrli.cc是一个比较好的源
 
 ### 效果
 加了chatluna-image-renderer后还可以渲染代码块为图片~
->    ![效果](../../assets/images/10.jpg)
+>    ![效果](10.jpg)
