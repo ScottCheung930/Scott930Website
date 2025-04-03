@@ -103,7 +103,7 @@ But at least open frontaul is good (from the Ericsson's perspective)
 
 Because anyway further decoupling of fraontaul and baseband is necessary.
 
-!!!+ "What is the role of academia in standarization"
+!!! "What is the role of academia in standarization"
 
     none, but impact the standardization
     personal reflection from speaker:
