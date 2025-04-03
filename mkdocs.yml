@@ -18,6 +18,7 @@ nav:
         - notes/masterThesis/2025-03-09.md
       - 讲座：5G and Beyond:
         - notes/lecture/note_CellularSystems-5GandBeyond.md
+        - notes/lecture/note_CellularSystems-5GandBeyond_part2.md
       - QQ机器人:
         - notes/qqBot/index.md
 theme:
