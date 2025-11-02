@@ -1,103 +1,4 @@
-# C++
-
-## 输入输出
-- cin 标准输入流
-- cout 标准输出流
-
-### 输入字符和string类字符串
-
-- ```cin >> str``` 会默认以空格作为输入结尾（空格仍保留在输入流中）
-- 读入包含空格的一整行: ```getling(cin, line_var)```
-
-### 输出格式控制符
-
-```#include <iomanip>```
-
-设定宽度(设定后全局保持有效): ```setw( int width) ```
-
-设置输出为定点小数: ```setiosflags(ios::fixed) ``` 等同于在输出前使用 ```cout.setf(ios_base::fixed, ios_base::floatfield);```
-
-```setprecision(1)```: 
-与```ios::fixed```共用时，控制小数位数为1位；当单独使用时，意味着包括整数部分在内共1位（比如678.9在不使用fixed时保留1位精度，会使用科学计数法，显示为7e+02）
-
-```cpp
-//设定输出的保留精度位数为1位小数
-cout << setiosflags(ios::fixed) << setprecision(1) << num << endl;
-```
-
-## 常用变量类型
-
-Note: c++的任何变量类型都是对象
-
-- 初始化方式：
-    ```cpp
-    string str = "hello";
-    string str("hello"); //调用构造函数
-    string str(str0);    //调用构造函数
-    string str{"hello"}; //仅在c++ 11及以后支持
-    ```
-
-- 可以赋值
-    ```cpp
-    string str1 = "hello";
-    string str2 = str1; //对象赋值，并非指针
-    //对比：c语言的char数组不能赋值
-    ```
-- 使用对象的指针，```&```，```*```, ```.```, ```->```的用法相同
-### string 类
-
-```#include <string>```
-- 初始化方法：
-
-    - 构造函数有optional argument：```string(..., int pos, int len)``` 表示从下标pos字符开始，取len个字符
-
-- 可以直接使用```==```判断string字符串是否相等，可以使用```<```等直接比较
-
-- 可以使用```+```来进行字符串拼接，使用```+=```来append
-
-- 可以**像**char数组一样用```[]```访问字符
-
-- 成员函数
-
-    ``` c++
-    str.length()
-    str.substr(int pos, int len)
-    str.insert(size_t pos, const string& s);
-    str.erase(size_t pos = 0, size_t len = npos);
-    str.append(const string& str);
-    str.replace (size_t pos, size_t len, const string& str);
-
-    //找子串的位置
-    size_t str.find(const string& str, size_t pos =0) 
-    if (str.find(substr) == string::npos){// (1)!
-    // string::npos 为string的静态成员常量，值为最大size_t值，表示没找到
-        cout << "Not found!" << endl;
-    }
-    ```
-    
-    1. 
-        ``` c++
-        #include <iostream>
-        #include <string>
-        using namespace std;
-
-        int main() {
-            string str("Hello, World!");
-            cout << (str.find("7788") == -1) << endl;
-            cout << str.find("7788")<< endl;
-            return 0;
-        }
-        ```
-        This code's output is:
-        ```markdown
-        1
-        18446744073709551615
-        ```
-        如果没有找到子串， str.find("7788") 将返回 std::string::npos ，这是一个无符号值，通常等于 size_t 可表示的最大值（64 位系统上为 18446744073709551615）。将该值与 -1 比较时，字面量 -1 会被隐式转换为无符号 size_t 值。一个有符号数转为无符号数是对无符号数的最大值取mod，-1对 $2^{64}$ 取模即为 $2^{64}-1$ 。
-
-        之所以是-1被隐式转换而非size_t，是因为根据 C++ 标准的常规算术转换，当一个操作中有一个无符号整数和一个有符号整数时，如果无符号类型可以表示有符号类型的所有值，则有符号值将转换为无符号类型。由于 size_t 是无符号的，因此字面形式 -1 将被转换为 size_t 值。
-
-
+# STL
 ???+ Note
     容器(Container/Collection)是满足一系列条件的一种对象类型。这些条件包括必须提供迭代器方法，容量查询方法，修改操作方法（对于可修改容器），内存分配器方法等等。
 
@@ -257,4 +158,54 @@ m.erase(key);
 //清空
 m.clear();
 
+```
+常见错误：
+```cpp
+if(exist[key]=='1'){//隐式地创建entry！
+    ...
+}
+
+if(exist.count(key)){...} //正确写法
+```
+
+## 遍历
+### iterator
+容器都有遍历的需求
+```cpp
+template<type> obj;
+template<type>::iterator it;
+it = obj.begin();
+it = obj.end();
+
+for(template<type>::iterator it = obj.begin();it!=obj.end();it++){
+    cout << *it << " ";
+}
+```
+### for each循环：iterator的语法糖
+```cpp
+for(type variable : container){
+    loop statement;
+}
+```
+
+另一种输入：
+```cpp
+int n;
+cin >> n;
+vector<int> nums(n);
+for(auto& num:nums){
+    cin >> num;
+} 
+```
+
+## typedef & using
+
+```cpp
+map<string, list<string>> phonebook;
+map<string, list<string>>::iterator it;//冗长
+
+typedef map<string, list<string>> PB;
+PB::iterator it;//ok
+
+using PB = map<string,list<string>>;//类型变量
 ```

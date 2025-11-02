@@ -7,7 +7,12 @@ nav:
       - communication/index.md
   - 代码:
       - coding/index.md
-      - c++: coding/c++.md
+      - c++: 
+        - coding/cpp/c++.md
+        - coding/cpp/1_string.md
+        - coding/cpp/2_io.md
+        - coding/cpp/3_STL.md
+        - coding/cpp/4_memory_and_lifetime.md
   - 杂记:
       - notes/index.md
       - 毕设: 
