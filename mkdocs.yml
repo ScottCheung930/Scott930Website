@@ -8,7 +8,7 @@ nav:
   - 代码:
       - coding/index.md
       - c++: 
-        - coding/cpp/c++.md
+        - coding/cpp/index.md
         - coding/cpp/1_string.md
         - coding/cpp/2_io.md
         - coding/cpp/3_STL.md
