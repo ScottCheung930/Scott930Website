@@ -7,6 +7,8 @@ nav:
       - communication/index.md
   - 代码:
       - coding/index.md
+      - c:
+        - coding/c/index.md
       - c++: 
         - coding/cpp/index.md
         - coding/cpp/1_types.md
