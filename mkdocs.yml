@@ -9,7 +9,7 @@ nav:
       - coding/index.md
       - c++: 
         - coding/cpp/index.md
-        - coding/cpp/1_string.md
+        - coding/cpp/1_types.md
         - coding/cpp/2_io.md
         - coding/cpp/3_STL.md
         - coding/cpp/4_memory_and_lifetime.md

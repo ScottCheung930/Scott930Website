@@ -6,6 +6,7 @@
 
 - ```cin >> str``` 会默认以空格作为输入结尾（空格仍保留在输入流中）
 - 读入包含空格的一整行: ```getline(cin, line_var)```
+- 读入一行直到指定分隔符：```getline(cin, line_var, delimeter)```
 
 ### 输出格式控制符
 

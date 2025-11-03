@@ -21,6 +21,8 @@
         - Basic Algorithms (sort, search, etc)
         - All identifiers in library are in the ```std``` namespace: ```using namespace std```
 
+```stack```, ```queue```, ```priority_queue``` 没有迭代器！
+
 ???+ Note
     泛型(Generic Class)编程是一种编程思想，其核心在于编写与具体数据类型无关的代码，从而使代码具有更高的复用性和灵活性。
     STL的模板类，例如vector<>就是一种泛型。
