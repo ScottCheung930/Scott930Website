@@ -8,13 +8,13 @@
 
 ### 初始化方法：
     
-    默认空串
+默认空串
 
-    除了常用的构造函数，还有：
-    
-    - ```string(const string& str, int pos, int len)``` 表示从下标pos开始，复制str的len个字符
-    - ```string(const char* s, size_t n)``` 复制C风格字符串的前n个字符
-    - ```string(size_t n, char c)``` 生成n个c字符的字符串
+除了常用的构造函数，还有：
+
+- ```string(const string& str, int pos, int len)``` 表示从下标pos开始，复制str的len个字符
+- ```string(const char* s, size_t n)``` 复制C风格字符串的前n个字符
+- ```string(size_t n, char c)``` 生成n个c字符的字符串
 
 ### 基本特性
 
@@ -28,60 +28,60 @@
 
 ### 成员函数
 
+``` c++
+str.length()
+
+//截取拼接
+str.substr(int pos) //取从pos开始直到末尾的字符串
+str.substr(int pos, int len)
+str.append(const string& str);
+
+//插入删除
+str.insert(size_t pos, const string& s);
+str.erase(size_t pos = 0, size_t len = npos);
+
+//查找
+size_t str.find(const string& str, size_t pos =0) 
+if (str.find(substr) == string::npos){// (1)!
+    // string::npos 为string的静态成员常量，值为最大size_t值，表示没找到
+    cout << "Not found!" << endl;
+}
+
+//替换：从pos开始的len个字符，替换成str
+str.replace(size_t pos, size_t len, const string& str);
+```
+
+1. 
     ``` c++
-    str.length()
+    #include <iostream>
+    #include <string>
+    using namespace std;
 
-    //截取拼接
-    str.substr(int pos) //取从pos开始直到末尾的字符串
-    str.substr(int pos, int len)
-    str.append(const string& str);
-
-    //插入删除
-    str.insert(size_t pos, const string& s);
-    str.erase(size_t pos = 0, size_t len = npos);
-    
-    //查找
-    size_t str.find(const string& str, size_t pos =0) 
-    if (str.find(substr) == string::npos){// (1)!
-        // string::npos 为string的静态成员常量，值为最大size_t值，表示没找到
-        cout << "Not found!" << endl;
+    int main() {
+        string str("Hello, World!");
+        cout << (str.find("7788") == -1) << endl;
+        cout << str.find("7788")<< endl;
+        return 0;
     }
-
-    //替换：从pos开始的len个字符，替换成str
-    str.replace(size_t pos, size_t len, const string& str);
     ```
-    
-    1. 
-        ``` c++
-        #include <iostream>
-        #include <string>
-        using namespace std;
-
-        int main() {
-            string str("Hello, World!");
-            cout << (str.find("7788") == -1) << endl;
-            cout << str.find("7788")<< endl;
-            return 0;
-        }
-        ```
-        This code's output is:
-        ```markdown
-        1
-        18446744073709551615
-        ```
-        如果没有找到子串， str.find("7788") 将返回 std::string::npos ，这是一个无符号值，通常等于 size_t 可表示的最大值（64 位系统上为 18446744073709551615）。将该值与 -1 比较时，字面量 -1 会被隐式转换为无符号 size_t 值。一个有符号数转为无符号数是对无符号数的最大值取mod，-1对 $2^{64}$ 取模即为 $2^{64}-1$ 。
-
-        之所以是-1被隐式转换而非size_t，是因为根据 C++ 标准的常规算术转换，当一个操作中有一个无符号整数和一个有符号整数时，如果无符号类型可以表示有符号类型的所有值，则有符号值将转换为无符号类型。由于 size_t 是无符号的，因此字面形式 -1 将被转换为 size_t 值。
-    
-    注意上述成员函数.insert, .append, .erase, .replace都是就地修改(mutating)的！(而不是拷贝并返回一个新的str)
-    它们的返回值是对原string对象的引用，因此也允许链式调用：
-
-    ``` c++
-    std::string s = "abc";
-    s.append("XYZ")        // s: "abcXYZ"
-    .replace(0, 1, "A")   // s: "AbcXYZ"
-    .insert(2, 3, '-');   // s: "Ab---cXYZ"
+    This code's output is:
+    ```markdown
+    1
+    18446744073709551615
     ```
+    如果没有找到子串， str.find("7788") 将返回 std::string::npos ，这是一个无符号值，通常等于 size_t 可表示的最大值（64 位系统上为 18446744073709551615）。将该值与 -1 比较时，字面量 -1 会被隐式转换为无符号 size_t 值。一个有符号数转为无符号数是对无符号数的最大值取mod，-1对 $2^{64}$ 取模即为 $2^{64}-1$ 。
+
+    之所以是-1被隐式转换而非size_t，是因为根据 C++ 标准的常规算术转换，当一个操作中有一个无符号整数和一个有符号整数时，如果无符号类型可以表示有符号类型的所有值，则有符号值将转换为无符号类型。由于 size_t 是无符号的，因此字面形式 -1 将被转换为 size_t 值。
+    
+注意上述成员函数.insert, .append, .erase, .replace都是就地修改(mutating)的！(而不是拷贝并返回一个新的str)
+它们的返回值是对原string对象的引用，因此也允许链式调用：
+
+``` c++
+std::string s = "abc";
+s.append("XYZ")        // s: "abcXYZ"
+.replace(0, 1, "A")   // s: "AbcXYZ"
+.insert(2, 3, '-');   // s: "Ab---cXYZ"
+```
 
 ### 字符串和数字转换
 
@@ -109,26 +109,27 @@ cout << to_string(-123.4) << endl;
 
 - 可以通过 ```+```或```+=```， 或者```append```
 - 也可以通过流 ```sstream```：
-    ``` c++
-    #include <sstream>
-    #include <iomanip>
-    #include <iostream>
-    int main(){
-        double x = 3.14159;
-        int n = 7;
 
-        std::ostringstream oss;
-        oss << "x=" << std::fixed << std::setprecision(2) << x << ", n=" << std::setw(3) << std::setfill('0') << n; // 宽度3、前导0
+``` c++
+#include <sstream>
+#include <iomanip>
+#include <iostream>
+int main(){
+    double x = 3.14159;
+    int n = 7;
 
-        std::string s = oss.str(); 
-        std::cout << s << std::endl;//(1)!
-    }
+    std::ostringstream oss;
+    oss << "x=" << std::fixed << std::setprecision(2) << x << ", n=" << std::setw(3) << std::setfill('0') << n; // 宽度3、前导0
+
+    std::string s = oss.str(); 
+    std::cout << s << std::endl;//(1)!
+}
+```
+
+1. 
     ```
-
-    1.
-        ```
-        x=3.14, n=007
-        ```
+    x=3.14, n=007
+    ```
 
 ### 技巧
 
