@@ -55,7 +55,7 @@ static const string base16_enc_tab("012345678ABCDEF");
 
 string testStr = "测试用于base16的字符串";
     string base16str;
-    for (unsigned char c : testStr) { //(1)!
+    for (unsigned char c : testStr) {// (1)!
         char high = c >> 4;
         char low = c & 0b00001111;
         base16str += base16_enc_tab[high];
