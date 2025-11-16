@@ -131,6 +131,17 @@ int main(){
     x=3.14, n=007
     ```
 
+### 转换为const char *
+
+比如当我们要使用```cstdlib```中的```system()```进行系统调用时，需要C语言风格字符串即const char *
+- ``` str.c_str() ```
+
+``` c++
+string cmd{"dir"};//windows cmd的命令
+system(cmd.c_str());
+
+```
+
 ### 技巧
 
 - 批量进行string的字符替换 

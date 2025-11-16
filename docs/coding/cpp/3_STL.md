@@ -51,17 +51,43 @@ v.back(); //last element
 
 v.push_back(e)
 v.pop_back()
-v.insert(pos,e)// pos 是iterator!
+v.insert(pos,e)// pos 是iterator, 在pos之前插入（使得e成为新的pos）
 v.erease(pos) // pos 是iterator!
-v.clear() //清空
 v.find(first, last, item) // return 一个iterator!
 ```
 
 #### 关于可变的vector长度
 - ```push_back()```和```pop_back()```会自动改变capacity,但```[]``` 越界也会出问题
-- 使用preallocate预先规定长度，会分配预先给定的capacity并初始化为0，所以size也会等于预先给定的长度
+- 预先规定长度，会分配预先给定的capacity并初始化为0，所以size也会等于预先给定的长度
 - 不预先给定长度，默认capacity和size就是0
 - capacity>=size，但capacity什么时候增长与编译器有关
+
+``` c++
+v.reserve(capacity) // 改变预留内存空间，不初始化，不改变size
+
+v.resize(size) // 若新size更小，舍弃末尾元素；
+               // 若新size更大，初始化新增的元素，需要扩充capacity则一并扩充
+
+v.clear() // 清空所有元素使size=0，不改变capacity
+
+v.shrink_to_fit()//将capacity缩小至与size相同
+```
+
+- ```emplace_back```，用于原位构造新对象。若我们在插入对象时，若先构造一个对象再用push_back插入，多了一次拷贝构造/移动构造的开销。而emplace_back在原位构造，不需要先构造再移动/拷贝。
+
+``` c++
+std::vector<std::string> v;
+
+// 1) push_back
+v.push_back("hello");    // 会产生一个临时 std::string，然后 move 进 v
+                         // （有时编译器能优化掉，但语义上是先构造再移动）
+
+// 2) emplace_back
+v.emplace_back("hello"); // 直接在 v 的存储空间里构造 std::string("hello")
+
+```
+
+但若有复杂/很多重载的构造函数或者以initializer_list为参数的构造函数，emplace_back有时候会调用错误的构造函数，push_back+显式地调用构造函数更安全。
 
 ### list(双向链表)
 只列出与vector不同的地方
@@ -172,7 +198,8 @@ if(exist.count(key)){...} //正确写法
 
 ## 遍历
 ### iterator
-容器都有遍历的需求
+很多容器都有遍历的需求，但除了stack, queue,priority_queue这三者不可使用iterator进行遍历.stack, queue, priprity_queue不能使用```begin()```或```end()```, 也无法进行```for(auto elem:container)```
+
 ```cpp
 template<type> obj;
 template<type>::iterator it;
