@@ -15,6 +15,7 @@ nav:
         - coding/cpp/2_io.md
         - coding/cpp/3_STL.md
         - coding/cpp/4_memory_and_lifetime.md
+        - coding/cpp/5_functions.md
   - 杂记:
       - notes/index.md
       - 毕设: 
