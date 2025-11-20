@@ -191,6 +191,7 @@ int val_error = static_cast<int>(LogLevel::ERROR)
 ## 类型推导(auto关键字)
 
 - auto会删除引用(&)和, const, 和volatile关键字
+
 ``` c++
 #include <iostream>
 using namespace std;
@@ -205,7 +206,7 @@ int main( )
     cout << count << " ";
  
     myAuto = 12;
-    cout << count << endl; //(1)!
+    cout << count << endl;//(1)!
 }
 ```
 
