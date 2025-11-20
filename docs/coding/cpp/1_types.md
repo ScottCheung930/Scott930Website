@@ -187,3 +187,41 @@ int val_error = static_cast<int>(LogLevel::ERROR)
 ```
 无法直接当成整数使用，必须显式类型转换
 
+
+## 类型推导(auto关键字)
+
+- auto会删除引用(&)和, const, 和volatile关键字
+``` c++
+#include <iostream>
+using namespace std;
+ 
+int main( )
+{
+    int count = 10;
+    int& countRef = count;
+    auto myAuto = countRef;
+ 
+    countRef = 11;
+    cout << count << " ";
+ 
+    myAuto = 12;
+    cout << count << endl;//(1)!
+}
+```
+
+1. 
+    输出为:
+    ```
+    11 11
+    ```
+    因为此处的auto为int而非int&
+    但如果是如下代码,则可得输出 11 12:
+    ``` c++
+    auto & myAuto1 = countRef;
+    countRef = 11;
+    cout << count << " ";
+    myAuto1 += 1;
+    cout << count << endl;
+    ```
+
+同样地,若要使用const, 需写成const auto或const auto&
