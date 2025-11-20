@@ -38,7 +38,7 @@
 
     ```___FUNCTION__```, 非标准但是广泛支持, 在__func__出现前就在C和C++中被各家编译器使用, 直到C99和C++11引入__func__. 实际效果等同于__func__.
 
-    ```__FUNCSIG__```, MSVC平台, 输出函数签名.
+    ```__FUNCSIG__```, MSVC平台, 输出函数签名, 包含模板信息.
 
     ```__FUNCDNAME__```, MSVC平台, 输出函数修饰名, 是编译器链接所使用的名字.
 
@@ -57,6 +57,23 @@
         Decorated function name: ?exampleFunction@@YAXXZ
         Function signature: void __cdecl exampleFunction(void)
         ```
+
+    ```__PRETTY_FUNCTION__```, GCC/Clang, 类似于__FUNCSIG__, 包含模板信息.
+
+    ``` c++
+    template <typename T>
+    void Foo::bar(T x) {
+        std::cout << __PRETTY_FUNCTION__ << "\n";//(1)!
+    }
+    ```
+
+    1. 
+        ```
+        void Foo::bar(T) [with T = int]
+        ```
+    
+    对于跨平台需求, 使用条件编译来根据当前平台类型来把上述宏包装为一个自己的宏
+    
 
 
 

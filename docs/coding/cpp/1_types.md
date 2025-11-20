@@ -226,3 +226,51 @@ int main( )
     ```
 
 同样地,若要使用const, 需写成const auto或const auto&
+
+## C++的字面量相较于C语言的区别
+参见C语言字面量
+
+- bool类型内建, true和false为关键字
+- 空指针字面量nullptr, 类型为std::nullptr_t, 避免重载时NULL和0的歧义
+- 窄字符串字面量
+    - C："abc" 的类型是 char[4]（可转换为 char*，理论上能修改，虽然改字符串字面量是 UB）
+    - C++："abc" 的类型是 const char[4]（不可修改)
+
+    ``` c++
+    /* C 里不少编译器会给警告但能过：*/
+    char *p = "abc";   // C
+
+    // char *p = "abc"; // 在C++中是错误,无法通过语法检查("const char*类型不能用于初始化char*类型的实体")
+    const char *p = "abc";  // 正确写法
+    ```
+- Unicode字面量
+    写法和C中相同, C++11中char16_t和char32_t为内建类型, 而C11依靠```<uchar.h>```
+    ```
+    auto s8  = u8"你好";   // UTF-8 窄字符串
+    auto s16 = u"你好";    // char16_t[]
+    auto s32 = U"你好";    // char32_t[]
+    auto wc  = L"你好";    // wchar_t[]
+
+    ```
+- Raw string 字面量
+
+``` c++
+const char* pat = R"(\d+\s+".*")";
+// 实际内容是：\d+\s+".*"
+
+const wchar_t* wpat = LR"(行首^\s+行尾$)";
+const char16_t* s16 = uR"(路径 C:\temp\foo.txt)";
+```
+中间的内容几乎不需要转义，可以直接放反斜杠和双引号；
+前面可以配合 u8, u, U, L 形成不同字符集的原始字符串。
+
+- 用户自定义字面量
+通过重载字面量后缀实现```operator""```
+```
+// 把浮点字面量加后缀 _km 变成“米”
+long double operator"" _km(long double x) {
+    return x * 1000.0L;
+}
+
+auto d = 1.2_km;  // d == 1200.0L
+```
