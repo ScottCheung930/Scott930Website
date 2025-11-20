@@ -205,7 +205,7 @@ int main( )
     cout << count << " ";
  
     myAuto = 12;
-    cout << count << endl;//(1)!
+    cout << count << endl; //(1)!
 }
 ```
 

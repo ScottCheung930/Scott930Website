@@ -5,13 +5,13 @@
 
 ???+ Note
     如何查看函数签名?
-
+    
     - ```__func__```, 在C99以及C++11之后的**标准**中存在, 其类型是const char字符数组, 返回值是函数名称
     
     ``` c++
     #include <string>
     #include <iostream>
-
+    
     namespace Test
     {
         struct Foo
@@ -21,7 +21,7 @@
             std::cout << __func__ << std::endl; //(1)!
         };
     }
-
+    
     int main()
     {
         Test::Foo::DoSomething(42, "Hello");
@@ -35,22 +35,22 @@
         ```
         DoSomething
         ```
-   
+    
     - ```___FUNCTION__```, 非标准但是广泛支持, 在__func__出现前就在C和C++中被各家编译器使用, 直到C99和C++11引入__func__. 实际效果等同于__func__.
 
     - ```__FUNCSIG__```, MSVC平台, 输出函数签名.
-
+    
     - ```__FUNCDNAME__```, MSVC平台, 输出函数修饰名, 是编译器链接所使用的名字.
-
+    
     ``` c++
     void exampleFunction()
     {
         printf("Function name: %s\n", __FUNCTION__);
-        printf("Decorated function name: %s\n", __FUNCDNAME__);//(1)!
+        printf("Decorated function name: %s\n", __FUNCDNAME__); //(1)!
         printf("Function signature: %s\n", __FUNCSIG__)
     }
     ```
-
+    
     1. 
         ```
         Function name: exampleFunction
