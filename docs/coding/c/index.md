@@ -70,8 +70,11 @@ string testStr = "测试用于base16的字符串";
 
 ## 算术右移/逻辑右移
 逻辑右移:右移所有bit; 算术右移:符号位不动, 右移其它bit
+
 - 对无符号数是逻辑右移
+
 - 对有符号正数, 逻辑右移和算术右移相同
+
 - 对有符号负数, 由编译器决定实现, 但一般为算术右移
 
 ## c语言一些字面量的表示
@@ -122,6 +125,8 @@ string testStr = "测试用于base16的字符串";
 | `L`      | `wchar_t`                  | `wchar_t wc = L'中';`                |
 | `u`（C11） | `char16_t`                 | `char16_t c16 = u'中';`              |
 | `U`（C11） | `char32_t`                 | `char32_t c32 = U'中';`              |
+
+C语言中使用unicode(char16_t, char32_t)需要通过```<uchar.h>```提供typedef
 
 ???+ Note
     关于C语言中的字符字面量的类型为什么是int
@@ -186,6 +191,7 @@ int c4 = '\101';  // 八进制转义，'A'
 | `u8`（C11） | `char[]`，内容保证 UTF-8 编码 | `char s8[] = u8"你好";`     |
 | `u`（C11）  | `char16_t[]`           | `char16_t s16[] = u"你好";` |
 | `U`（C11）  | `char32_t[]`           | `char32_t s32[] = U"你好";` |
+
 字符串可以相邻拼接:
 ```
 char msg[] = "hello, "
@@ -208,3 +214,155 @@ C23 开始才有真正的 nullptr 常量
 bool b0 = false;
 bool b1 = true;
 ```
+
+## C++11相对于C11的字面量
+
+- 布尔值
+
+内建.
+
+- 空指针
+
+```nullptr```.
+```int *p = 0```仍然合法, NULL被宏定义成0, 但重载时语义模糊
+
+- 字符串字面量
+
+```"abc"```的类型是```const char[4]```
+
+``` c++
+const char* s = "abc" //C++中合法
+// char* s = "abc"    // C中能通过编译, 但s并非数组类型, 修改s[n]是UB!
+                      // 无法通过C++编译(const char[]不能赋值给char*) 
+```
+
+- Unicode字面量
+
+```char16_t``` ```char32_t```变为内建类型
+
+- 原始字符串(Raw String Literal)
+
+中间的内容几乎不需要转义, 可以直接放反斜杠和双引号;
+前面可以配合 u8, u, U, L 形成不同字符集的原始字符串.
+
+``` c++
+const char* pat = R"(\d+\s+".*")";
+// 实际内容是：\d+\s+".*"
+
+const wchar_t* wpat = LR"(行首^\s+行尾$)";
+const char16_t* s16 = uR"(路径 C:\temp\foo.txt)";
+```
+
+- 用户自定义字面量
+
+```operator""```通过用户自定义字面量重载
+
+``` c++
+// 把浮点字面量加后缀 _km 变成“米”
+long double operator"" _km(long double x) {
+    return x * 1000.0L;
+}
+
+auto d = 1.2_km;  // d == 1200.0L
+```
+
+## 数组与指针: array-to-pointer decay 和 形参类型调整
+
+C/C++标准中两条关键的规则:
+
+- 数组到指针的转换
+
+    除了作为 sizeof 的操作数, 单目 & 的操作数, 或字符串字面量初始化数组的情况之外, 一个表达式如果是"数组类型", 会被转换为"指向该数组第一个元素的指针".
+
+- 形参类型调整规则
+
+    声明为 “数组类型” 的参数会被**调整（adjust）**成 “指向元素类型的指针”。
+    声明为 “函数类型” 的参数会被调整成 “指向该函数类型的指针”。
+
+### 字符串的初始化 vs 字符串首字符指针
+
+``` 
+char s1[] = "hello";
+char* s2  = "hello";
+```
+
+在C语言中,上面一行是正常的数组通过字面量来初始化,下面一行则是字符指针存了字面量的首字符地址.
+
+sizeof(s1) = 6, sizeof(s2) = 8(x64平台), 说明一个是数组类型, 一个是指针类型.
+
+第一行这样的写法是只读的:
+``` c
+#include <stdio.h>
+
+int main()
+{
+	char *s = "hello";
+	s[1] = 'a'; // 未定义行为, 运行时这一段会发生segmentation fault
+	printf("%c\n", s[1]);
+	return 0;
+}
+```
+由于数组->指针转换, "hello"字面量在赋值时转换为了指向字符串首字符的指针, 而这个字符串字面量是存储于常量存储区的, 对常量存储区进行写入导致段错误. 
+
+而下面的代码就可以正常运行
+``` c
+#include <stdio.h>
+
+int main()
+{
+	char s[] = "hello";
+	s[1] = 'a';
+	printf("%c\n", s[1]);
+	return 0;
+}
+```
+
+在C++中,上面一行依然可行, 下面一行无法通过编译.
+
+### 数组作形参的几种写法
+
+``` c
+void f(char s[]);
+void f(char s[10]);
+void f(char *s);
+```
+在C语言中, 由于发生了数组到指针转换, 这三个声明是等同的. 可以如下验证: 将三种写法中的任意两种, 一种作函数声明, 另一种作函数定义, 可以通过编译并正常运行.
+
+``` c
+#include <stdio.h>
+
+void f(char s[]);
+void f(char *s)
+{
+	printf("%s", __PRETTY_FUNCTION__);
+}
+
+int main()
+{
+	char s[10] = "hello";
+	f(s);
+	return 0;
+}
+```
+
+在C++中也有相同规则:下述写法在C++中会报重复声明而非重载
+``` c++
+#include <iostream>
+using namespace std;
+
+void f(char s[10]) {
+	cout << __FUNCSIG__ << endl;
+}
+void f(char* s) {
+	cout << __FUNCSIG__ << endl;
+}
+
+int main()
+{
+	char s[10] = "hello";
+	f(s);
+	return 0;
+}
+```
+
+### 多维数组的传参
