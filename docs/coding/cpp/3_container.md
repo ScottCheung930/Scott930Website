@@ -1,7 +1,9 @@
-# STL
-???+ Note
-    容器(Container/Collection)是满足一系列条件的一种对象类型。这些条件包括必须提供迭代器方法，容量查询方法，修改操作方法（对于可修改容器），内存分配器方法等等。
+# 容器
 
+容器(Container/Collection)是满足一系列条件的一种对象类型。这些条件包括必须提供迭代器方法，容量查询方法，修改操作方法（对于可修改容器），内存分配器方法等等。
+
+
+## STL
 
 ???+ Note
     STL（Standard Template Library）是C++标准库的一部分，提供了一组标准的容器实现，其中某些容器为常见的数据结构。特定数据结构通常涉及特定的基础算法，STL还提供了一些常用的基础算法实现。
@@ -119,50 +121,6 @@ x.erase(pos1,pos2)
 
     - 需要在array两侧插入，deque更好。需要注意在front端删除时vector和deque区别不大，但在front端插入时vector不好。
 
-iterator的使用：
-双向链表的iterator不存在内秉的大于小于关系！
-```cpp
-list<int> lst(100);
-list<int>::iterator p; 
-for(p=lst.begin();p!=lst.end();p++){
-    //注意此处应使用!= 而非<=, p++只表示“下一个item”，并不代表index增长
-    ...
-}
-//同理：
-list<int>::iterator it1=lst.begin();
-list<int>::iterator it2=lst.end();
-while(it1!=it2){
-    //此处应使用!=
-    ...
-} 
-```
-!!! Note
-    容器都有迭代器，因为总是需要遍历操作
-
-用iterator复制:
-```c++
-#include <iostream>
-#include <algorithm>
-#include <list>
-#include <vector>
-using namespace std;
-int main()
-{
-    list<int> lst(100, 1);
-    vector<int> v(100);
-    copy(lst.begin(),
-         lst.end(),
-         v.begin());
-    vector<int>::iterator it;
-    for(it=v.begin(); it!=v.end(); it++){
-        cout << *it << " ";
-    }
-    return 0;
-}
-```
-
-
-
 ### map
 
 ```cpp
@@ -206,6 +164,7 @@ template<type>::iterator it;
 it = obj.begin();
 it = obj.end();
 
+//许多iterator不存在内秉的大于小于关系, 所以结束条件用!=
 for(template<type>::iterator it = obj.begin();it!=obj.end();it++){
     cout << *it << " ";
 }
@@ -238,3 +197,26 @@ PB::iterator it;//ok
 
 using PB = map<string,list<string>>;//类型变量
 ```
+
+## 容器的实现
+
+以vecotr为例, 简化的```std::vector<T>```如下所示:
+```
+template <class T>
+class vector {
+    T* _begin;   // 指向动态数组首元素
+    T* _end;     // 指向最后一个元素后面（size）
+    T* _cap;     // 指向容量末尾（capacity）
+public:
+    T* data() noexcept { return _begin; }
+    // ...
+};
+```
+
+vector对象本身(```_begin/_end/_cap``` 这三个指针成员)通常在栈(局部)/静态存储区(全局)/别的对象的存储里, 取决于定义的位置.
+
+但真正存放元素的动态数组在堆上,由分配器管理,分配的堆空间的地址记录在```_begin/_end/_cap```中. 获取```_begin```的值可以使用```.data()```方法.
+
+这也使得C++容器可以实现高效的内存管理(移动语义/右值引用/```move()```), 因为有的时候我们关心对象, 有的时候我们只关心"对象的值". 如果我们将对象a拷贝给对象b, 且我们不再需要使用对象a, 我们只是想让对象a的值搬到对象b内, 则我们只需要拷贝对象a的```_begin/_end/_cap```(在实际过程中是交换), 不需要拷贝对象a的堆空间, 即我们只是让对象b指向了对象a原来指向的堆空间, 这样就使得程序非常高效.
+
+在"函数"一节中展示了C++返回值的移动构造和move()使得按值传递且返回值类型的函数消耗极少额外资源的例子.
