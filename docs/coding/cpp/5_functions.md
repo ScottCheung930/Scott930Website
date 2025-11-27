@@ -165,7 +165,22 @@ int main() {
     TestArrPtr 8
     ```
 
-## 函数与容器作为参数, 以及移动语义
+## 哑元函数
+
+``` c++
+int fun(int,int a){   
+     return a/10*10;
+}
+......
+fun(1,5);//参数1不起作用, 但必须有
+```
+
+详见[哑元与运算符重载：前缀++与后缀++](blog.csdn.net/Megustas_JJC/article/details/53583672)
+
+前置的++ (```++i```) 重载函数没有参数,返回对this对象的引用
+后置的++ (```i++```) 重载函数有哑元, 编译器会让一个额外的0参与重载解析, i++调用的实际是```i.operator ++(0)```或者```operator ++(i, 0)```. 后置++内部会拷贝自增之前的this对象给一个新对象并按值返回新对象, 体现为后置的++返回自增之前的值.
+
+## 函数与容器作为参数, 以及初识移动语义
 
 容器作为参数, 有引用和按值传递. 即使按值传递也可以有优化:
 
@@ -215,4 +230,4 @@ int main(){
 
 所以在传参之后, testVector函数使用了移动构造, 让作为形参的```datas```抢走了实参```datas```的内部指针```_begin/_end/_cap```. 之后, 同样地, 在返回时通过移动构造返回值来把这块堆空间交给了datas1.
 
-事实上, 上述解释忽略了对象被同类型prvalue初始化时copy elision的作用, 在返回时理应先在testVector(datas)处构造一个临时对象ret, 而后再使用ret移动赋值给datas1. copy elision的作用是不构造临时对象ret, 而是直接构造datas1.
+事实上, 除了上述解释, 上述代码的优化还包括对象被同类型prvalue初始化时**copy elision**的作用: 在返回时理应先在testVector(datas)处构造一个临时对象ret, 而后再使用ret移动赋值给datas1. Copy elision的作用是不构造临时对象ret, 而直接构造datas1, 节省了一次移动赋值. 不过忽略copy elision并不影响解释地址相同的现象.
