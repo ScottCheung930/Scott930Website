@@ -182,7 +182,10 @@ fun(1,5);//参数1不起作用, 但必须有
 
 ## 函数与容器作为参数, 以及初识移动语义
 
-容器作为参数, 有引用和按值传递. 即使按值传递也可以有优化:
+容器作为参数, 有引用和按值传递.
+
+### 按值传参
+即使按值传递, 对于容器C++有一些自动优化:
 
 ``` c++
 #include <iostream>
@@ -203,9 +206,9 @@ int main(){
 }
 ```
 
-```.data()```方法获得了容器的堆空间的首地址. 这段代码会输出三个地址，其中第二个地址和第三个地址相同，而第一个地址与第二第三个地址不同。因为在返回时, 自动使用了移动构造, 将局部对象datas所指的堆空间直接移动给了datas1(交换datas1和局部对象datas的```_begin/_end/_cap```指针, 见"容器"一节).
+```.data()```方法获得了容器的堆空间的首地址. 这段代码会输出三个地址，其中第二个地址和第三个地址相同，而第一个地址与第二第三个地址不同。因为在返回时, **如果 return 语句中的表达式是函数体中的一个 implicitly movable entity，并且它的类型和返回类型相同（忽略 cv）, 则编译器首先尝试以移动的方式返回，即尝试先将表达式视为 rvalue；如果重载解析失败，再将表达式视为 lvalue 尝试以拷贝的方式返回。如果仍然失败，则编译错误。** 而implicitly movable entity 是 **具有 automatic storage duration 的一个 non-volatile object(局部变量datas属于此类), 或者此类object的右值引用**. 所以编译器首先尝试以移动的方式返回, 将局部对象datas所指的堆空间直接移动给了datas1(交换datas1和局部对象datas的```_begin/_end/_cap```指针, 见"容器"一节). 
 
-若使用```move()```, 还可以减少拷贝内存开销.
+若使用```move()```, 还可以减少拷贝内存开销:
 ``` c++
 #include <iostream>
 #include <vector>
@@ -230,4 +233,29 @@ int main(){
 
 所以在传参之后, testVector函数使用了移动构造, 让作为形参的```datas```抢走了实参```datas```的内部指针```_begin/_end/_cap```. 之后, 同样地, 在返回时通过移动构造返回值来把这块堆空间交给了datas1.
 
-事实上, 除了上述解释, 上述代码的优化还包括对象被同类型prvalue初始化时**copy elision**的作用: 在返回时理应先在testVector(datas)处构造一个临时对象ret, 而后再使用ret移动赋值给datas1. Copy elision的作用是不构造临时对象ret, 而直接构造datas1, 节省了一次移动赋值. 不过忽略copy elision并不影响解释地址相同的现象.
+事实上, 除了上述解释所涉及的, 上述代码的优化还包括对象被同类型prvalue初始化时**copy elision**的作用: 在返回时理应先在testVector(datas)处构造一个临时对象ret, 而后再使用ret**移动构造**给datas1(这里是初始化datas1, 所以是移动构造不是移动复制). Copy elision的作用是不构造临时对象ret, 而直接构造datas1, 节省了一次移动构造. 不过忽略copy elision并不影响解释地址相同的现象.
+
+### 按引用传参
+再看这个例子:
+``` c++
+#include <iostream>
+#include <vector>
+using namespace std;
+
+vector<int> testVector(vector<int>& datas){
+    cout << "testVector, datas " << datas.data() << endl;
+    return datas;
+}
+
+int main(){
+    vector<int> datas{1,2,3,4,5,6};
+
+    cout << "main, datas " << datas.data() << endl;
+    auto datas1 = testVector(datas); 
+    cout << "main, datas1 " << datas1.data() << endl;
+}
+```
+
+此时, 上方代码输出的3个地址, 第一个与第二个相同, 而第三个与第一二个不同. 所以若返回值类型不是引用类型, 而我们返回了一个引用, 移动构造反而不会被自动调用, 拷贝构造会被调用.
+
+其原因是, 当返回类型为按值返回时, 我们返回一个局部对象, 编译器清楚函数内的局部对象将被销毁, 偷走这个局部对象的资源是没有影响的, 所以可以放心将局部对象的资源移动出来. 但若我们返回一个左值引用, 编译器不能推导被引用对象的资源是否是可移动的. 从语义上, 当我们传入一个引用类型, 我们只是期待让对象在函数内被修改或者仅仅只是为了高效, 我们通常后续还要使用这个对象, 而并不期望销毁它. 从语法上,左值引用类型不符合初始化返回值时的隐式移动规则(引用类型不是对象类型object type, 也不是局部变量的右值引用), 所以不能使用移动构造.

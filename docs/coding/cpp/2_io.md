@@ -2,46 +2,111 @@
 - cin 标准输入流
 - cout 标准输出流
 - cerr 标准错误流
+- clog 标准日志流/带缓冲的错误流
 
-### 输入字符和string类字符串
+## ostream
+ostream是一个类, cout是预定义的ostream类的对象
+cerr和clog也是ostream类的对象, cerr无缓冲区(实际有, 但只是每次都flush()), clog有缓冲区
 
-- ```cin >> str``` 会默认以空格作为输入结尾（空格仍保留在输入流中）
-- 读入包含空格的一整行: ```getline(cin, line_var)```
-- 读入一行直到指定分隔符：```getline(cin, line_var, delimeter)```
+注意clog和cerr都与C语言的stderr相关联, 很多时候它们会绑定到相同streambuf(同一个stderr缓冲区), 只是cerr默认每次都调用.flush(), 而clog并不会每次都flush(). 不过标准并不保证它们共享缓冲区, 若需要clog立刻输出, 应直接换成cerr或手动调用clog.flush().
 
-### 输出格式控制符
+### fmtflags
 
-```#include <iomanip>```
+C++用bitmask表示各种格式控制开关, 而整体的掩码可以通过```os.flags()```获得.```std::ios::fmtflags```是一个bitmask类型,  ```ios```被包含在```iostream```里. fmtflags包含不同功能的几个字段, 可以通过```cout.setf```直接设置某个字段的bitmask, 比如可以通过:
+- ```std::cout.setf(std::ios::hex, std::ios::basefield);```把进制字段basefield 清空，再置表示16进制的比特位.
+- ```std::cout.setf(std::ios::hex);```按位或上表示16进制的比特位(没有把其它位置零, 可能冲突).
 
-设定宽度(设定后全局保持有效): 
-```cpp
+但一般不会直接操纵bitmask, 而是通过对应的**操纵子(manipulator)**实现, 例如上述设置hex的操作等价于 ```cout << hex```. 这里是```<<```被重载, 使得其接受下一个操作数```hex```为函数指针, 再调用hex函数, 而hex函数就包装了```setf(std::ios::hex, std::ios::basefield)```.
+
+#### 常用的```fmtflag```操纵子
+1. 数字进制
+    - ```std::dec```
+    - ```std::dec```
+    - ```std::oct```
+
+2. 浮点格式
+    - ```std::fixed```
+    - ```std::scientific```
+    - ```std::hexfloat```
+
+3. 对齐方式
+    - ```std::left```     // 左对齐
+    - ```std::right```    // 右对齐（默认）
+    - ```std::internal``` // 符号在左，数字右对齐（常配合宽度和填充）
+
+4. 其它
+
+| flag         | 操纵子              | 作用                                |
+| ------------ | ---------------- | --------------------------------- |
+| `showbase`   | `std::showbase`  | 显示进制前缀：`0x`、`0` 等                 |
+| `showpos`    | `std::showpos`   | 正数前加 `+`                          |
+| `showpoint`  | `std::showpoint` | 浮点数即使是整数也显示小数点与尾零                 |
+| `uppercase`  | `std::uppercase` | `E`、`X` 等字母大写                     |
+| `boolalpha`  | `std::boolalpha` | `bool` 以 `true/false` 输出而不是 `1/0` |
+| `skipws`     | `std::skipws`    | 输入时跳过前导空白（默认开）                    |
+|              | `std::noskipws`  | 输入时不跳过空白                          |
+| `unitbuf`    | `std::unitbuf`   | 每次输出都立即 flush                     |
+
+#### 按格式打印后复原输出格式
+
+``` c++
+void print_hex(std::ostream& os, int x) {
+    auto old = os.flags();  // 保存
+
+    os << std::hex << std::showbase << x;
+
+    os.flags(old);          // 恢复
+}
+```
+
+### iomanip
+```iomanip```库存储带参数的格式操纵子和一些高级格式调整的工具. 需要```#include <iomanip>```
+
+- 设定宽度: 
+``` cpp
 cout << setw(4) << num;
 ```
 
-设定小数精度: 
-```cpp
+- 设定小数精度: 
+``` cpp
 double num = 1.23456;
 cout << setprecision(3) << num; //得到1.235
 ```
 
-设定定点小数
-```cpp
+- 设定定点小数位数(与```fmtflags```的```std::fixed```连用)
+``` cpp
 double num = 1.2,num2 = 1.2345;
 cout << fixed<<setprecission(3)<<num; //1.200
 cout << fixed<<setprecission(3)<<num2; //1.235
 ```
 
-设置前导零
-```cpp
-cout << setw(4) <<setfill('0')<< 1 //得到0001
+- 设置前导零
+``` cpp
+cout << setw(4) <<setfill('0')<< 1 //得到0001(默认std::right)
 ```
 
-设置左/右对齐
-```cpp
-cout << left<<num;
-cout << right << num;
+- 设置进制(对```fmtflags```的封装), 只支持8,10,16
+``` c++
+cout << setbase(8) << 16 //20 
 ```
 
+- 包装fmtflags
+``` cpp
+ios::fmtflags f = ios::showbase | ios::uppercase | ios::showpos;
+cout << setiosflags(f) << hex << 255;
+```
+``` cpp
+void apply_format(std::ostream& os, std::ios::fmtflags f) {
+    os << std::setiosflags(f);
+}
+
+```
+## istream
+### 输入字符和string类字符串
+
+- ```cin >> str``` 会默认以空格作为输入结尾（空格仍保留在输入流中）
+- 读入包含空格的一整行: ```getline(cin, line_var)```
+- 读入一行直到指定分隔符：```getline(cin, line_var, delimeter)```
 ### 输入一行数字直到换行
 ```cpp
 int num;
@@ -52,6 +117,7 @@ while(cin >> num){
 }
 ```
 
+## sstream
 ### istringstream, ostringstream
 
 istringstream 可以作为输入流；

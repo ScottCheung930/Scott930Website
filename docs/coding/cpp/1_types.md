@@ -274,3 +274,55 @@ long double operator"" _km(long double x) {
 
 auto d = 1.2_km;  // d == 1200.0L
 ```
+
+## char*, vector<unsigned char>, string之间的高效转换(对于二进制数据的处理)
+尽量不写循环
+```c++
+#include<vector>
+#include<iostream>
+#include<string>
+using namespace std;
+
+int main(){
+    /*字符串转换为vector<unsigned char>, 初始化一个新的vector*/
+    const char* cstr{ "测试const char *到vector" };
+    int size = strlen(cstr);      
+    //cstr+size是'\0'的下标
+    //vector的构造可以使用.begin()和.end() iterator (对于字符串即为地址)
+    //而end是'\0'的再下一位(nullptr)
+    vector<unsigned char> data(cstr, cstr+size+1)
+    cout << data.data() << endl; //堆空间.data()可以当作字符串打印!
+    cout << size <<" " << data.size() << endl //输出24 25, 因为vector<unsigned char>的size包含了'\0'
+    
+
+    /*字符串转换为vector<unsigned char>, 内存移动给已有的vector*/
+    char astr[]{ "测试数组到vector"};
+    data.clear();
+    data.assign(astr, astr+sizeof(astr));
+    // void assign(const_iterator first,const_iterator last);相当于copy()函数
+    cout << sizeof(astr) <<" "<< data.size()<<endl //输出17 17, sizeof()包含'\0'
+    
+
+    /*string转换为vector*/
+    string str{"测试string到vector"}
+    data.clear();
+    data.assign(str.begin(), str.end()); //直接使用string类的begin()和end()不能复制'\0'! string类的size是不包含'\0'的.
+    data.push_back('\0');
+    cout << str.size() <<" "<< data.size()<<endl//输出18 19
+    
+    /*string转换为vector, 第二种方法*/
+    string str{"测试string到vector"}
+    data.clear();
+    data.assign(str.data(), str.data()+str.size()+1); 
+    // string类的size()和length()不包含'\0'!
+    cout << str.size() <<" "<< data.size()<<endl// 输出18 19
+
+    /*vector转string*/
+    string outstr(data.begin(), data.end());
+    cout << outstr.size() <<" "<<data.size()<<endl//输出19 19
+    //在这种情况下, outstr的最后一个字符又是'\0'了
+    //
+}
+
+
+```
