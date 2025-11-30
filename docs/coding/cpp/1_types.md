@@ -277,6 +277,12 @@ auto d = 1.2_km;  // d == 1200.0L
 
 ## char*, vector<unsigned char>, string之间的高效转换(对于二进制数据的处理)
 尽量不写循环
+
+- 对于字符串长度
+    - ```char[]```的```strlen```不包含`\0`
+    - ```string```类默认不带`\0`,即用字符串常量初始化时不会读入`\0`
+    - ```vector<unsigned char>```将`\0`字符当作普通数组元素对待
+
 ```c++
 #include<vector>
 #include<iostream>

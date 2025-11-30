@@ -63,6 +63,7 @@ void print_hex(std::ostream& os, int x) {
 ```iomanip```库存储带参数的格式操纵子和一些高级格式调整的工具. 需要```#include <iomanip>```
 
 - 设定宽度: 
+注意:不同于其它manipulator, ```setw```只影响下一次输出
 ``` cpp
 cout << setw(4) << num;
 ```
@@ -101,6 +102,45 @@ void apply_format(std::ostream& os, std::ios::fmtflags f) {
 }
 
 ```
+
+### 改输出格式后恢复
+- 对于fmtflags, 可以使用```std::ios::fmtflags flags = os.flags()```保存状态;
+
+- 使用```std::streamsize prec = os.precision()```保存输出精度状态;
+
+- 使用```char fill_char = os.fill()```保存填充字符状态;
+
+- 使用guard class来封装一个不影响整体的输出函数
+
+``` c++
+struct ios_guard {
+    std::ios& os;
+    std::ios::fmtflags flags;
+    std::streamsize prec;
+    char fill_char;
+
+    explicit ios_guard(std::ios& os_)
+        : os(os_), flags(os_.flags()),
+          prec(os_.precision()), fill_char(os_.fill()) {}
+
+    ~ios_guard() {
+        os.flags(flags);
+        os.precision(prec);
+        os.fill(fill_char);
+    }
+};
+
+void myPrint(std::ostream& os, double x) {
+    ios_guard _{os};  // 作用域内临时改格式
+
+    os << std::showpos
+       << std::hexfloat
+       << std::setprecision(5)
+       << std::setfill('0')
+       << x;
+}   // 离开作用域自动恢复 flags/precision/fill
+```
+
 ## istream
 ### 输入字符和string类字符串
 
