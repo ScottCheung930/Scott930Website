@@ -142,21 +142,116 @@ void myPrint(std::ostream& os, double x) {
 }   // 离开作用域自动恢复 flags/precision/fill
 ```
 
-## istream
-### 输入字符和string类字符串
+### 无格式输出
 
-- ```cin >> str``` 会默认以空格作为输入结尾（空格仍保留在输入流中）
-- 读入包含空格的一整行: ```getline(cin, line_var)```
-- 读入一行直到指定分隔符：```getline(cin, line_var, delimeter)```
-### 输入一行数字直到换行
+需要按严格字节输出, 或者需要高性能地写大块缓冲区, 且不需要格式控制时使用.
+
+- ```cout.put(char ch)``` 输出一个字符, 忽略所有格式(即使之前设置过), 不会自动flush缓冲区(有缓冲)
+    
+    ```cout.put(65);```输出字母`A`.
+
+- ```cout.write(const char* s, std::streamsize n)``` 从地址s开始, 输出n个字符(不会遇到```\0```而停止), 无自动flush.
+
+### 输出重定向
+- ```1 > file```重定向标准输出, ```2 > file```重定向标准错误
+
+
+## istream
+### 整行输入 ```cin.getline()```或```string::getline()```
+- 作为```char[]```输入: ```cin.getline(char* , streamsize )```
+    参数为C风格字符数组和最大输入长度
+    ``` c++
+    char buf[1024]{0};
+    cin.getline(buf, sizeof(buf)-1);//-1为了留出'\0'的空间
+    ```
+    也可以读入直到指定分隔符
+    ```cin.getline(char*, streamsize, delemeter)```
+- 作为```string```类输入 (需```#include<string>```):
+    - 读入包含空格的一整行: ```getline(cin, line_var)```
+    - 读入直到指定分隔符：```getline(cin, line_var, delimeter)```
+
+### 按字符输入 ```cin.get()```
+- 输入一行按空格分隔的数字
+    ```cin >> str``` 会默认跳过开始的空格, 并以空格或换行作为输入结尾（空格或换行仍保留在输入流中!）;
 ```cpp
 int num;
+vector<int> nums;
 while(cin >> num){
-    if(cin.getc()=='\n'){
+    nums.push_back(num);
+    if(cin.get()=='\n'){
         break;
     }
 }
 ```
+
+- 输入直到换行或指定分隔符的另一种方法
+```cpp
+string str;
+for(;;){
+    char c = cin.get()
+    if(cin.get()=='\n'){
+        ......
+        break;
+    }
+    str += c;
+}
+```
+
+### cin错误处理
+
+#### cin.rdstate()
+```ios::iostate rdstate()```是输入输出流的一组状态位, 其包含以下标志位:
+``` c++
+ios::goodbit  // 0，表示目前没有错误
+ios::eofbit   // 读到 EOF（文件/输入结束）
+ios::failbit  // 格式错误，或操作失败（但流本身没坏）
+ios::badbit   // 输入流错误（比如底层设备损坏）
+```
+每次cin输入后,根据操作是否出错以及何种错误, 会自动更新rdstate()
+- 正常状态: ```cin.rdstate() == ios::goodbit``` 为true
+   注意: goodbit值为0
+- 出错: 若多种错误同时发生, rdstate等于多种错误标志位的按位或
+若手动判断, 可以如下进行:
+``` c++
+auto state = cin.rdstate();
+if (state & ios::eofbit)  { /* 到 EOF 了 */ }
+if (state & ios::failbit) { /* 输入格式错误 or 读取失败 */ }
+if (state & ios::badbit)  { /* 输入流损坏(输入设备坏了)*/ }
+```
+#### 判断函数```good()/fail()/bad()/eof()```
+
+```good()/fail()/bad()/eof()```是对rdstate()判断的封装:
+```c++
+cin.good()  // 等价于 rdstate() == goodbit
+cin.eof()   // rdstate() & eofbit
+cin.fail()  // rdstate() & (failbit | badbit)  
+// 注意：fail() 包含 badbit
+cin.bad()   // rdstate() & badbit
+```
+
+failbit主要出现在输入格式不匹配的情况.
+
+常见用法是:
+- 通过流对象的```operator bool()```重载, 流对象在条件判断里返回```!fail()```
+```cpp
+while(cin>>x){...} //等价于while(!(cin>>x).fail()){ }
+```
+
+- 通过流对象的```operator !()```重载, ```!```之后的流对象会返回```fail()```
+``` c++
+if(!cin){...} ///等价于if(cin.fail()
+```
+
+???+ Note "while (cin >> x)为什么不等于while ((cin >> x).good()?)"
+    ```while ((cin >> x).good()```会读不到"恰好在文件结尾的那个字符"
+
+    例如文件内容"1 2 3"(无多余空格)
+
+    ``` c++
+    while (cin>>x){...}
+    ``` 
+    在第三次循环时会读到3, 此时eofbit被设置, cin.good()为false, cin.fail()为false. 若采用```while ((cin >> x).good()```, 第三次循环将不执行循环体直接结束, 而采用```while (cin >> x)```则将执行函数体, 并在第四次循环时因为读取不到任何字符而设置failbit, cin.fial()为true, 退出.
+    
 
 ## sstream
 ### istringstream, ostringstream
