@@ -47,23 +47,11 @@ C++用bitmask表示各种格式控制开关, 而整体的掩码可以通过```os
 |              | `std::noskipws`  | 输入时不跳过空白                          |
 | `unitbuf`    | `std::unitbuf`   | 每次输出都立即 flush                     |
 
-#### 按格式打印后复原输出格式
-
-``` c++
-void print_hex(std::ostream& os, int x) {
-    auto old = os.flags();  // 保存
-
-    os << std::hex << std::showbase << x;
-
-    os.flags(old);          // 恢复
-}
-```
-
 ### iomanip
 ```iomanip```库存储带参数的格式操纵子和一些高级格式调整的工具. 需要```#include <iomanip>```
 
 - 设定宽度: 
-注意:不同于其它manipulator, ```setw```只影响下一次输出
+注意:不同于其它manipulator, ```setw```只影响下一次`<<`
 ``` cpp
 cout << setw(4) << num;
 ```
@@ -105,12 +93,25 @@ void apply_format(std::ostream& os, std::ios::fmtflags f) {
 
 ### 改输出格式后恢复
 - 对于fmtflags, 可以使用```std::ios::fmtflags flags = os.flags()```保存状态;
+``` c++
+void print_hex(std::ostream& os, int x) {
+    auto old = os.flags();  // 保存
 
-- 使用```std::streamsize prec = os.precision()```保存输出精度状态;
+    os << std::hex << std::showbase << x;
 
-- 使用```char fill_char = os.fill()```保存填充字符状态;
+    os.flags(old);          // 恢复
+}
+```
 
-- 使用guard class来封装一个不影响整体的输出函数
+若使用了不在fmtflags范围内的格式控制选项(如下所示), 还应:
+
+- 使用```std::streamsize prec = os.precision()```保存输出精度状态, 再使用```os.precision(prec);```恢复;
+
+- 使用```char fill_char = os.fill()```保存填充字符状态, 再使用```os.fill(fill_char)```恢复;
+
+- 注意: ```setw```也不在fmtflags范围之内但其只影响下一次`<<`;
+
+#### 使用guard class来封装一个不影响整体的输出函数
 
 ``` c++
 struct ios_guard {
