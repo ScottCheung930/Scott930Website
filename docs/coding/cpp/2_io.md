@@ -4,6 +4,11 @@
 - cerr 标准错误流
 - clog 标准日志流/带缓冲的错误流
 
+???+ Note
+    ```1>``` 重定向stdout,
+    ```2>```重定向stderr,
+    ```>```换成```>>```: 覆写文件换成在文件尾部追加
+
 ## ostream
 ostream是一个类, cout是预定义的ostream类的对象
 cerr和clog也是ostream类的对象, cerr无缓冲区(实际有, 但只是每次都flush()), clog有缓冲区
@@ -43,6 +48,7 @@ C++用bitmask表示各种格式控制开关, 而整体的掩码可以通过```os
 | `showpoint`  | `std::showpoint` | 浮点数即使是整数也显示小数点与尾零                 |
 | `uppercase`  | `std::uppercase` | `E`、`X` 等字母大写                     |
 | `boolalpha`  | `std::boolalpha` | `bool` 以 `true/false` 输出而不是 `1/0` |
+| `noboolalpha`  | `std::noboolalpha` | `bool` 以 `1/0` 输出 |
 | `skipws`     | `std::skipws`    | 输入时跳过前导空白（默认开）                    |
 |              | `std::noskipws`  | 输入时不跳过空白                          |
 | `unitbuf`    | `std::unitbuf`   | 每次输出都立即 flush                     |
@@ -232,6 +238,7 @@ cin.bad()   // rdstate() & badbit
 failbit主要出现在输入格式不匹配的情况.
 
 常见用法是:
+
 - 通过流对象的```operator bool()```重载, 流对象在条件判断里返回```!fail()```
 ```cpp
 while(cin>>x){...} //等价于while(!(cin>>x).fail()){ }
@@ -251,9 +258,75 @@ if(!cin){...} ///等价于if(cin.fail()
     while (cin>>x){...}
     ``` 
     在第三次循环时会读到3, 此时eofbit被设置, cin.good()为false, cin.fail()为false. 若采用```while ((cin >> x).good()```, 第三次循环将不执行循环体直接结束, 而采用```while (cin >> x)```则将执行函数体, 并在第四次循环时因为读取不到任何字符而设置failbit, cin.fial()为true, 退出.
-    
 
-## sstream
+#### 错误处理并输出导致错误的输入
+- 使用```cin.clear()```恢复状态;
+- 需要读入引起错误的输入, 否则会堵塞;
+``` c++
+#include<iostream>
+#include<string>
+
+for(;;){
+    int x{0};
+    cin >> x;
+    if(cin.fail()){
+        cin.clear() //恢复rdstate状态为正常
+        cout << "cin fail" <<endl;
+
+        string line;
+        getline(cin, line);//把引起错误的输入取出, 否则输入会阻塞在这里
+        cout << "cin fail due to: "<<line <<endl;
+
+        continue;
+    }
+}
+
+```
+
+## stringstream
+```#include <sstream>```
+
+```stringstream```继承于```basic_iostream```, 支持cout和cin的绝大多数用法, 只是不再绑定终端+缓冲区(比如在stringstream中插入endl, 只是插入一个换行, 因为没有刷新缓冲区的概念)
+
+应用场景: 
+1. 不是通过设备输入输出, 而是通过字符串, 比如通过网络发送/接收string类的消息体并解析, 这种消息体可能包含很复杂的格式.
+
+2. 为了避免各种类型与string的类型转换, 输出流自带把所有东西当成字符串处理的功能.
+
+### stringstream基础用法
+```c++
+#include <sstream>
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main(){
+    stringstream ss;
+    ss << "test stringstream" << hex<<100<<boolalpha << true; //同cout语法
+
+    string str1, str2;
+    ss >> str1 >> str2 ;  //同cin语法
+    cout << str1 << str2; //输出test stringstream 
+
+    string str3 = "123\n456\n789";
+    stringstream ss3(str3);
+    string line;
+    
+    for(;;){
+        getline(ss3, line);
+        cout << line<<endl;
+        if(ss.eof()) break;
+    }
+    
+    
+}
+```
+
+- 输出stringstream的内容:```cout << ss.str() << endl```
+
+- 清空stringstream: ```ss.str("")```将空字符串传给stringstream (注意, 同cin一样, ```ss.clear()```是清空错误状态, 不是清空内容)
+
+
 ### istringstream, ostringstream
 
 istringstream 可以作为输入流；
@@ -310,10 +383,99 @@ oss << "x=" << fixed << setprecision(2) << x
 string out = oss.str();   // "x=3.14, n=007"
 ```
 
-构造错误/日志信息
+## fstream
+```include<fstream>```
+
+类型:```fstream```, ```ifstream```, ```ofstream```
+
+- 基础用法:
+    - 打开文件 ```fstream fs("text.txt")```或者```fs.open("test.txt")```
+    - 关闭文件 ```fs.close()```. 当文件流对象析构时也会自动close, 但需注意有的系统有文件句柄的总数限制, 所以不使用文件时应主动关闭fs. close也会自动flush缓冲区.
+    - 文件是否打开```fs.is_open()```
+    - 打开模式
+        ```c++
+        std::ios::in     // 以输入（读）方式打开
+        std::ios::out    // 以输出（写）方式打开
+        std::ios::app    // 追加写，每次写都在末尾
+        std::ios::trunc  // 打开时截断文件为长度 0（清空）, 在ios::out或者ostream时默认启用, 有ios::in或者istream时不生效.
+        std::ios::binary // 二进制模式
+        std::ios::ate    // 打开后定位到文件末尾（但仍可在任意位置读写）
+        ```
+        打开模式是bitmask, 所以按位或
+        ```fs.open("test.txt", std::ios::binary|std::ios::app)```
+
+若使用```fstream```, 则必须指明读/写/读写
+
+### 文件写入
+- 可以使用```fstream```或```ofstream```
+
+- ```ios::binary```, 在Windows平台和Linux平台默认对```\r\n```的处理不同, 可能存在默认的转换. 而```ios::binary```不对此进行处理或转换. 尤其是对于图像视频等二进制文件, 应使用```ios::binary```防止写入时文件损坏.
+
+- ```fstream```和```ostream```写文件是默认清空源文件开始写!
+
+- ```ios::app```: 每次写入时都从结尾开始写入, 文件不存在会被创建
+
 ```cpp
-int row = 5, col = -1;
-ostringstream oss;
-oss << "Invalid index (" << row << ", " << col << ")";
-throw runtime_error(oss.str());
+//以写入模式打开文件
+fstream wfs(testfile, ios::out|ios::binary|ios::app);
+//或者: wfs.open(testfile, ios::out|ios::binary);
+wfs<<"1234567890\n";
+wfs.write("987654321", 9);
+```
+### 文件读取
+
+- ```ios::ate```仅在打开时移到文件末尾, 但并非每次读写自动都在末尾
+
+- 处理打开失败
+``` c++
+testfile = "test.txt";
+fstream rfs(testfile, ios::in|ios::binary)
+
+if(!rf.is_open()){
+    cerr << "open file" << testfile << "failed!"<<endl;
+    return -1;
+}
+```
+
+- 输出读到的字符数
+```c++
+char buf[4090]{0};
+rfs.read(buf,sizeof(buf)-1)
+
+cout<<rfs.gcount()<<endl;//输出读了的字符数
+cout<<buf<<endl
+```
+
+- 获取文件大小:
+``` c++
+//先移动文件读取指针到尾部
+ifstream ifs(testfile, ios::binary|ios::ate)
+
+//获取文件读取指针的位置, 即尾部位置
+cout << testfile << "filesize=" <<ifs.tellg();
+```
+
+- 实时读取文件的新增内容
+
+```c++
+#include<string>
+#include<iostream>
+#include<fstream>
+using namespace std;
+
+int main(){
+    string testfile = "test.txt";
+    ifstream ifs(testfile, ios::ate|ios::binary);
+    string line;
+
+    for(;;){
+        getline(ifs,line);//由于已经在结尾, getline会失败(ifs.fail()为true)
+        if(!line.empty()){//或者!ifs.fail()
+            cout<<"newLine: "<<line <<endl; 
+        }
+        ifs.clear();//恢复ifs的rdstate, 否则会一直处于fail状态
+    }
+}
+
+
 ```
