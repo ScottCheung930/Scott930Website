@@ -405,7 +405,7 @@ string out = oss.str();   // "x=3.14, n=007"
         打开模式是bitmask, 所以按位或
         ```fs.open("test.txt", std::ios::binary|std::ios::app)```
 
-若使用```fstream```, 则必须指明读/写/读写
+若使用```fstream```, 则必须在第二个参数位(打开模式)指明读/写/读写; 若为```ofstream```或者```ifstream```则不用.
 
 ### 文件写入
 - 可以使用```fstream```或```ofstream```
@@ -419,7 +419,7 @@ string out = oss.str();   // "x=3.14, n=007"
 ```cpp
 //以写入模式打开文件
 fstream wfs(testfile, ios::out|ios::binary|ios::app);
-//或者: wfs.open(testfile, ios::out|ios::binary);
+//或者: fstream wfs; wfs.open(testfile, ios::out|ios::binary);
 wfs<<"1234567890\n";
 wfs.write("987654321", 9);
 ```
@@ -487,5 +487,132 @@ int main(){
 
 我们可以通过改变```std::istream``` / ```std::ostream``` / ```std::iostream```等类内部的```stream_buf```来实现重定向.
 
-### 实现一个可全局切换的日志
+### 实现一个可切换输出设备(终端/文件)的static输出流
+
+#### ```std::basic_ios::rdbuf()```
+
+无参数时, 返回流的缓冲区指针
+``` c++
+//返回当前cout绑定的streambuf(默认stdout)
+std::streambuf* consoleBuf = std::cout.rdbuf()
+
+//返回文件输出流绑定的streambuf
+std::ofstream ofs("out.txt", ios::binary|ios::app);
+std::streambuf* fileBuf = std::cout.rdbuf();
+```
+
+以缓冲区指针作参数时, 替换某个流的缓冲区, 并清除rdstate的错误状态.
+``` c++
+//将cout重定向至out.txt
+std::cout.rdbuf(fileBuf); 
+```
+
+注意, ```std::basic_ios::set_rdbuf()```也是替换streambuf指针, 但它不会清除错误状态(```rdstate```). 同时它是```protected```, 所以只能在```basic_ios```的派生类的成员函数里被调用.
+
+#### 具体实现
+
+- log.h
+``` c++
+// log.h
+#pragma once
+#include <ostream>
+#include <string>
+
+// 对外暴露的“日志流”
+extern std::ostream log_stream;
+
+// 切换输出目标
+void set_log_to_console();
+bool set_log_to_file(const std::string& filename);
+```
+
+- log.cpp
+``` c++
+// log.cpp
+#include "log.h"
+#include <iostream>
+#include <fstream>
+
+namespace {
+    // 真正打开文件的流，内部用
+    std::ofstream log_file;
+
+    // 记住标准输出的 buffer，方便切回终端
+    std::streambuf* console_buf = nullptr;
+}
+
+// 注意：先不绑定任何 buffer，避免静态初始化顺序问题
+std::ostream log_stream(nullptr);
+
+void set_log_to_console()
+{
+    // 第一次调用时，把 cout 的 buffer 记下来
+    if (!console_buf) {
+        console_buf = std::cout.rdbuf();
+    }
+
+    // 让 log_stream 使用终端的 buffer
+    log_stream.rdbuf(console_buf);
+}
+
+bool set_log_to_file(const std::string& filename)
+{
+    // 先关掉之前打开的文件（如果有）
+    if (log_file.is_open()) {
+        log_file.close();
+    }
+    log_file.clear(); // 清理错误状态
+
+    // 以追加方式打开文件
+    log_file.open(filename, std::ios::out | std::ios::app);
+    if (!log_file.is_open()) {
+        // 打开失败就返回 false，不修改当前 log_stream 的目标
+        return false;
+    }
+
+    // 让 log_stream 使用文件的 buffer
+    log_stream.rdbuf(log_file.rdbuf());
+    return true;
+}
+```
+
+- main.cpp
+``` c++
+// main.cpp
+#include "log.h"
+#include <iostream>
+
+int main()
+{
+    // 程序开始时先选择一个默认输出目标
+    set_log_to_console();
+
+    log_stream << "程序启动...\n";
+
+    // 某个地方根据配置/参数切换到文件
+    if (set_log_to_file("app.log")) {
+        log_stream << "现在开始把日志写到 app.log\n";
+    } else {
+        log_stream << "无法打开 app.log，继续输出到终端\n";
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        log_stream << "一条日志：" << i << '\n';
+    }
+
+    // 随时可以再切回终端
+    set_log_to_console();
+    log_stream << "结束，回到终端输出\n";
+
+    return 0;
+}
+
+```
+
+注意: 
+1. log.cpp中定义log_stream时直接写```std::ostream log_stream(cout.rdbuf())```可能有静态初始化顺序问题. 静态初始化顺序问题是指不同编译单元间的初始化顺序是不明确的, 编译器首先会进行零初始化, 然后进行常量的初始化, 然后对剩下的东西执行动态初始化(执行构造函数等). 当存在跨编译单元的依赖(```extern```)时, 就有可能出现用还没初始化的全局对象去初始化另一个全局对象. 
+
+本例子中, ```std::cout```这一对象是在iostream所引入的另外的编译单元中初始化的, 而```log_stream```是在```log.cpp```中初始化的. 两者的初始化在不同编译单元, 应避免顺序依赖. 所以写```std::ostream log_stream(nullptr)```.
+
+2. log.cpp中的匿名命名空间```namespace {...}```作用在此处等同于```static```, 即限制全局变量仅该编译单元可见. 只是使用匿名命名空间可以对变量/函数/结构体/类/枚举类/using等使用, 且可以直接作用于一大段代码, 而static只能用于变量和函数且需要挨个标注.
 
