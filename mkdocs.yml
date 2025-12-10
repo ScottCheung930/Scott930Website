@@ -16,6 +16,8 @@ nav:
         - coding/cpp/3_container.md
         - coding/cpp/4_memory_and_lifetime.md
         - coding/cpp/5_functions.md
+        - coding/cpp/6_compile_and_multifile.md
+        - coding/cpp/macro.md
   - 杂记:
       - notes/index.md
       - 毕设: 

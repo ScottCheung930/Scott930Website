@@ -256,8 +256,9 @@ if(!cin){...} ///等价于if(cin.fail()
 
     ``` c++
     while (cin>>x){...}
-    ``` 
-    在第三次循环时会读到3, 此时eofbit被设置, cin.good()为false, cin.fail()为false. 若采用```while ((cin >> x).good()```, 第三次循环将不执行循环体直接结束, 而采用```while (cin >> x)```则将执行函数体, 并在第四次循环时因为读取不到任何字符而设置failbit, cin.fial()为true, 退出.
+    ```
+
+    在第三次循环时会读到3, 此时eofbit被设置, cin.good()为false, cin.fail()为false. 若采用```while ((cin >> x).good()```, 第三次循环将不执行循环体直接结束, 而采用```while (cin >> x)```则将执行函数体, 并在第四次循环时因为读取不到任何字符而设置failbit, cin.fail()为true, 退出.
 
 #### 错误处理并输出导致错误的输入
 - 使用```cin.clear()```恢复状态;
@@ -411,7 +412,7 @@ string out = oss.str();   // "x=3.14, n=007"
 
 - ```ios::binary```, 在Windows平台和Linux平台默认对```\r\n```的处理不同, 可能存在默认的转换. 而```ios::binary```不对此进行处理或转换. 尤其是对于图像视频等二进制文件, 应使用```ios::binary```防止写入时文件损坏.
 
-- ```fstream```和```ostream```写文件是默认清空源文件开始写!
+- ```fstream```(```ios::out```)和```ostream```写文件是默认清空源文件开始写! (默认设置```std::ios::trunc```). 若不希望清空源文件, 使用```ios::app```.
 
 - ```ios::app```: 每次写入时都从结尾开始写入, 文件不存在会被创建
 
@@ -424,7 +425,7 @@ wfs.write("987654321", 9);
 ```
 ### 文件读取
 
-- ```ios::ate```仅在打开时移到文件末尾, 但并非每次读写自动都在末尾
+- ```ios::ate```在打开时移到文件末尾(但并非每次读写自动都在末尾, 与```ios::app```不同)
 
 - 处理打开失败
 ``` c++
@@ -476,6 +477,15 @@ int main(){
         ifs.clear();//恢复ifs的rdstate, 否则会一直处于fail状态
     }
 }
-
-
 ```
+
+## streambuf
+
+```std::basic_streambuf```是缓冲区的底层类,与具体设备进行交互,管理缓冲区. 其内部维护读写指针, 并实现了一组虚函数如```overflow()```, ```underflow```等用来在缓冲区写满/读完时触发对设备的操作.
+
+```std::basic_streambuf```作为基类, 而对于不同的读写设备(文件/字符串)有不同的派生类. 当需要对其它类型的输入输出设备进行操作时(例如直接输出到socket), 也可以自己实现一个继承```basic_streambuf```的类.
+
+我们可以通过改变```std::istream``` / ```std::ostream``` / ```std::iostream```等类内部的```stream_buf```来实现重定向.
+
+### 实现一个可全局切换的日志
+
