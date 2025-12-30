@@ -422,15 +422,19 @@ int main(){
 注意有继承关系的类的同名函数并非重写(override), 重写概念只适用于使用虚方法时派生类的方法重写了基类的虚方法.
 
 ## 多态
-多态:同一个方法的行为随上下文而异. 多态的实现可基于两种机制: 
-1. 在派生类中重新定义基类的方法(即上文"继承中同名的成员变量和函数");
-2. 使用虚(virtual)方法, 有虚方法的继承称为虚继承.
+- **多态**: 同一个方法的行为随上下文而异.
 
-### 虚继承
+- **静态多态**: 函数重载, 模板;
 
-#### 虚方法
+- **动态多态**: 通过虚方法实现.
 
-**在基类方法的声明中使用关键字virtual, 则该方法在基类以及所有的派生类的中都是虚方法.**
+多态常与公有继承结合, 为不同类型的实体提供统一的接口. 多态公有继承的实现可基于两种机制: 
+1. 静态多态: 在派生类中重新定义基类的方法(即上文"继承中同名的成员变量和函数");
+2. 动态多态: 使用虚(virtual)方法.
+
+### 虚方法
+
+**在基类方法的声明中使用关键字virtual, 则该方法在基类以及所有的派生类中都是虚方法.**
 ```cpp
 class Base{
 public:
@@ -451,7 +455,7 @@ public:
     int id1{1};
 
     Derive1(string str, int id): Base(str, id) {}
-    virtual void showName(){
+    virtual void showName() override {
         cout << "Derive1 Name " << name <<endl;
     }
     void showNameNonVirtual(){
@@ -464,20 +468,22 @@ public:
     int id2{2};
 
     Derive2(string str, int id): Derive1(str, id) {}
-    void showName(){
+    void showName() override {
         cout << "Derive2 Name " << name <<endl;
     }
 };
 
 ```
-上述```Base::showName()```, ```Derive1::showName()```, , ```Derive2::showName()```都是虚方法;
-而```Base::showNameNonVirtual()```,```Derive1::showNameNonVirtual()```,```Derive2::showNameNonVirtual()```不是虚方法. 
+上述```Base::showName()```, ```Derive1::showName()```,  ```Derive2::showName()```都是虚方法;
+而```Base::showNameNonVirtual()```,```Derive1::showNameNonVirtual()```不是虚方法. 
 
-#### 静态绑定和动态绑定
+派生类的同名函数会**重写(override)**基类的虚函数. 重写时应在派生类的函数签名后, 函数体前加上 ```override```关键字, 这样会检查基类是否有对应的虚函数.
+
+### 静态绑定和动态绑定
 
 函数作为一个片段存在于内存的代码区, 一般而言, 将函数调用解释为保存上下文并让程序计数器跳转到函数的起始地址, 这被称为绑定(binding, 或称联编). 静态绑定(static binding, 又称静态联编或early binding早期联编), 是指编译器在编译阶段就把函数调用解释为跳转到一个固定的函数起始地址. 而动态绑定(dynamci binding, 又称动态联编/晚期联编)是指, 在编译阶段不能确定函数调用使用哪个地址, 需要在运行时确定, 所以编译器生成的是"在运行时选择跳转到正确的函数的代码". 
 
-#### 继承类型的指针和引用类型的向上强制转换(upcasting)
+### 继承类型的指针和引用类型的向上强制转换(upcasting)
 
 对于一般类型, 在不使用显式类型转换时, C++并不允许将一种类型的地址赋值给另一类型的指针, 也不允许将一种类型的引用指向另一种类型. 
 
@@ -485,7 +491,7 @@ public:
 
 这意味着, **一个形参是基类引用/基类指针类型时, 可以传入派生类对象/派生类对象地址**.
 
-#### 虚方法实现多态
+### 虚方法实现多态
 
 **当通过指针或引用调用对象的成员函数, 且成员函数为虚方法, 则将使用动态绑定; 除此之外的情况使用静态绑定.**
 
@@ -546,8 +552,125 @@ Base Name DeriveObj
 
 #### 虚函数表
 
-定义了虚方法的类都有虚函数表
+定义了虚方法的类都有虚函数表. 注意每个类对应一张虚函数表, 这个表不会存在对象中, 每个对象只保存一个隐藏的指针成员vptr指向其所属类的虚函数表.
+
+所以有虚函数会使对象多一个指针的空间. 
 
 ![虚函数表的机制(摘自C++ PrimerPlus)](./images/virtualFuncTable.png)
 
+### 纯虚函数和抽象类
+- 纯虚函数没有实现;
+    ```virtual func(para) = 0;```
 
+- 有纯虚函数的基类或继承了纯虚函数(没有重写基类纯虚函数)的派生类被称为抽象类;
+
+- **抽象类不能实例化**, 因此可以通过此方式实现强制规范, 让使用者必须实现指定的函数接口.
+
+纯虚函数只作为函数接口.
+
+``` cpp
+#include <iostream>
+using namespace std;
+
+class XThread
+{
+public:
+    virtual void Run()=0;
+    void Start() { 
+        //系统线程创建
+        //日志
+        //计时
+        //异常处理
+        //...
+        Run();
+    }
+};
+
+class XTask: public XThread
+{
+protected:
+    void Run() override {
+        cout << "XTask Run" << endl;
+    }
+};
+
+int main()
+{
+    XTask task;
+    task.Start();
+
+    XThread* xt = new XTask();
+    xt->Start();
+}
+```
+```
+XTask Run
+XTask Run
+```
+上述代码给出了一个纯虚函数的例子, 在这里我们设计了XThread抽象类, 这个类可能包装了一些线程管理的功能放在Start里, 但我们具体要执行的线程将放在Run里面, 这样就把用户定义的部分和库提供的功能很好地分开. 同时由于抽象类不可实例化, 就强制用户必须重写Run, 库函数提供者不对线程的具体执行负责. 同时一个基类也允许了诸如```vector<XThread>```或者```unique_ptr<XThread>```等写法, 使得代码可扩展性兼容性更好.
+
+注意这里要清楚一点, 由于我们没有重写Start()且Start不是虚函数, ```task.Start()```和```xt->Start()```都是静态绑定到的```XThread::Start()```. 而Start()内部的Run()调用在运行阶段根据实际类型判断绑定到```XTask.Run()```. 
+
+虽然基类不能访问派生类的private成员, 此处在访问控制时(编译期, 静态类型检查), Run()检查到的是```XThread::Run()```, 是基类自己的函成员函数, 所以通过了访问检查. 而运行时访问控制并不会再次启动, 所以运行时Start()内的Run()绑定到了```XTask::Run()```
+
+### 常见坑: 析构函数在绝大部分情况应设置为虚函数
+``` cpp
+#include <iostream>
+using namespace std;
+
+class XThread
+{
+public:
+    virtual void Run()=0;
+    void Start() { Run();}
+
+    XThread()
+    {
+        cout << "ctor XThread" << endl;
+    }
+
+    ~XThread() //此处本应写为 virtual ~XThread()
+    {
+        cout << "dtor XThread" <<endl;
+    }
+};
+
+class XTask: public XThread
+{
+public:
+    XTask()
+    {
+        cout << "ctor XTask" <<endl;
+    }
+    
+    ~XTask()
+    {
+        cout << "dtor XTask" <<endl;
+    }
+
+private:
+    void Run() override {
+        cout << "XTask Run" << endl;
+    }
+};
+
+int main()
+{
+    XThread* xt = new XTask();
+    delete xt;
+}
+```
+```
+ctor XThread
+ctor XTask
+dtor XThread
+```
+如上代码所示, 若非虚析构函数, ~XTask()将不会调用, 因为此时是静态绑定, 造成指针xt实际绑定到了~XThread(), 则只对XTask对象内存中属于XThread的部分进行了析构, 这就造成了内存泄露. 
+
+当我们改成```virtual ~XThread() {... ...}```, 才能成功析构XTask:
+```
+ctor XThread
+ctor XTask
+dtor XTask
+dtor XThread
+```
