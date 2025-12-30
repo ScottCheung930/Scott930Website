@@ -87,4 +87,44 @@ extern "C"{
 
 c++的函数签名和c的函数签规则是不同的, 所以需要用不同的编译器
 
-### 多文件对象的声明和定义
+### 多文件类的声明和定义
+- 成员变量与成员函数声明在.h, 成员函数定义在.cpp;
+- 注意static成员变量应在.cpp中定义(并初始化)
+```cpp
+// myClass.h
+
+class myClass{
+public:
+    myClass();
+    myClas(int x);
+    ~myClass();
+
+    void setVal(int x);
+    int getVal() const;
+    static int getCnt() const;
+    
+private:
+    int a;
+    static int cnt;
+
+}
+
+
+// myClass.cpp
+
+myClass::myClass():a(0){
+    std::cout << "default ctor\n";
+}
+myClass::myClass(int x):a(x){
+    std::cout << "ctor with value\n";
+}
+myClass::~myClass(){
+    std::cout << "destructed\n";
+}
+
+void myClass::setVal(int x){a= x;}
+int myClass::getVal(){return a;}
+int myClass::getCnt(){return cnt;}
+
+myClass::cnt; //静态成员变量需要在此定义
+```

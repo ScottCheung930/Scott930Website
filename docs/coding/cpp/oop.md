@@ -1,0 +1,553 @@
+# 面向对象
+## 一些规则
+- 永远不要把成员变量放到public
+- 给成员变量加前缀或后缀下划线, 以示与全局变量的区分.
+- 对对象取地址就是对象的this指针.
+- 对象本身(空对象)占>=1字节的内存(绝大多数实现为==1字节), 因为即便是两个空对象也需要有不同的地址. 但有时候内存对齐(例如4字节对齐)会放大空对象的大小.
+
+## 静态成员变量和静态成员函数
+
+### 静态成员变量
+
+静态成员变量与类绑定而非对象. 例如统计某个类的有多少个对象的counter, 某个类为新对象分配的自增ID, 某个类所有对象适用的常量, 某一类所有对象的共享资源(缓存, 线程池等)
+
+- 类内仅声明, 需要在类外定义
+```cpp
+///a.h
+class A{
+private:
+    static int val;
+}
+
+///a.cpp
+int A::val; 
+```
+
+- 非常量的static成员变量不能在类内初始化, 需要在类外初始化
+
+```cpp
+///a.h
+class A{
+private:
+    static int val1;//static int 不可类内初始化
+    int val2 = 2;
+    static const int N = 3;//N是编译时常量, 可以这样写;
+
+}
+
+///a.cpp
+int A::val1 = 1; 
+```
+
+- 特殊: ```static const``` 可以在类内初始化;
+
+若它只当作编译时常量表达式(定义数组大小, 用作模板非类型参数, switch-case的case), 则不用在类外另加定义; 否则仍应当在类外进行定义.
+
+``` cpp
+///a.j
+class A{
+private:
+    static const int N = 3;//N是编译时常量, 不必在类外定义
+    static const int M = 4;//M是需要内存的变量, 需要在类外定义.
+
+}
+
+///a.cpp
+const int A::M;//不用写static了
+
+///main.cpp
+... ...
+// A::N在编译时被替换成了3, 不是变量, 不需要在类外定义.
+int arr[A::N];  
+
+// A::M被读值, 当作变量处理, 需要分配内存, 需要在类外定义
+int x = A::M;
+std::cout << A::M << std::endl;
+... ...
+
+```
+
+### 静态成员函数
+
+- 非static成员函数和普通函数的区别?
+
+    非static成员函数有隐含参数this, 而static成员函数没有. 因为从实现层面, 对非static成员函数的调用必须使用this指针.
+    
+    首先成员函数的CV/引用限定符限制了改成员函数是否可以修改caller对象(```int MyClass::getValue() const;```/```int MyClass::setValue();```), 或者区分重载函数被左值引用对象还是右值引用对象调用():
+    ```cpp
+    class A
+    {
+    public:
+        void text()& { cout<<"左值引用\n"; }
+        void text()&& { cout<<"右值引用\n"; }
+    }；
+
+    int main(){
+        A a;
+        a.text();    //  输出"左值引用"
+        A().text();    //  输出"右值引用"
+    }
+    ```
+    这都是通过改变隐含的this指针参数类型来实现的.
+
+    其次在多继承/虚继承场景时, 成员函数必须取得具体唯一的子对象的地址, 对于不同的子对象才能执行不同的行为.
+
+- 静态成员函数由于和类绑定而非对象, 因此只能访问同样和类绑定的静态成员变量, 不能访问非静态成员变量.
+
+#### 静态成员函数的应用
+
+1. 单例模式(Meyers Singleton)
+对于需要确保某个类全局只有唯一实例的情况(例如日志系统), 在static成员函数内定义static对象, 可以确保不会重复实例化且线程安全(只在第一次调用时实例化).
+``` cpp
+class Logger {
+public:
+    static Logger& Instance() {
+        static Logger inst;          // 线程安全：C++11 起保证
+        return inst;
+    }
+
+    void Log(const std::string& msg) {
+        // ...
+    }
+
+private:
+    Logger() = default;
+    ~Logger() = default; 
+};
+```
+
+2. 包装成员函数为C语言库的回调函数指针
+C语言库常需要一个普通函数指针作为回调函数, 因为C语言没有"隐含this指针"的设计, 直接传入对象的成员函数会有问题, 所以若我们希望通过C语言库回调某个对象的成员函数, 则需要通过一个static成员函数来包装.
+
+``` cpp
+extern "C" {
+    //该C语言库的功能为在发生event_i时, 调用C_Callback(event_i, user_j) 去修改指针user_j所指向的数据.
+    //用户自定义要传入的回调函数, 在发生指定event时对指定user进行指定操作. 对于面向对象, user即为指向某对象的指针.
+
+    typedef void (*C_Callback)(int event, void* user);
+    void RegisterCallback(C_Callback cb, void* user);
+}
+
+class Client {
+public:
+    void Start() {
+        RegisterCallback(&Client::OnEventThunk, this);
+    }
+
+private:
+    void OnEvent(int event) {
+        //真正的处理流程
+    }
+
+    // “桥接函数”：签名严格匹配 C_Callback
+    static void OnEventThunk(int event, void* user) {
+        auto* self = static_cast<Client*>(user);
+        self->OnEvent(event);
+    }
+};
+```
+## 构造函数和初始化
+
+### 类成员变量的初始化方式
+
+???+ Note C++变量的初始化过程
+
+    所有**拥有静态存储期的变量**, 都会在main函数之前进行初始化. 对**这些拥有静态存储期的变量**, 初始化由编译器和程序运行共同完成. 首先编译器会进行静态初始化, 静态初始化又先后分为**零初始化**(zero-initialization, 把所有具有静态存储期的对象都置为0), 和**常量初始化**(对于满足编译期常量的, 初始化为常量值). 然后在程序运行时, 执行**动态初始化**(执行构造函数等). 
+
+- 默认成员初始化器(initializer), 从C++11 开始
+
+    初始化器会在构造函数的函数体执行之前完成
+
+    ``` cpp
+    class A{
+        int n{42};//用{}有编译器类型检查
+        int m = 42;//用"="号没有类型检查
+    }
+    ```
+    注意静态成员变量不能在类内初始化, 除了静态成员常量, 它可以在类内初始化(见上文).
+
+    也可以用已初始化的成员变量去初始化别的成员变量:
+    ```cpp
+    class A{
+        int n{42};
+        int m{n+1};
+    }
+    ```
+
+    默认成员初始化器也支持如下语法:
+    ``` cpp
+    class MyClass{
+        int _id{_count++};
+        static int _count;
+    public:
+        MyClass(){
+            cout << "Create My Class" <<_id <<endl;
+        }
+
+        ~MyClass(){
+            cout << "Drop My Class" <<_id<<endl;
+        }
+    }
+    
+    int MyClass::_count = 0;
+
+    int main(){
+        MyClass obj0;
+        MyClass obj1;
+        MyClass obj2;
+    }
+    ```
+
+    1. 
+        上述代码的输出为:
+        ```
+        Create My Class0
+        Create My Class1
+        Create My Class2
+        Drop My Class2
+        Drop My Class1
+        Drop My Class0
+        ```
+
+    ???+ Note 上述代码的初始化顺序
+        明明_count声明在_id之后, 为什么_id能够用_count去初始化呢? 因为_count是static, 是一个有静态存储期的变量, 在进入main函数之前以及对象被创建之前就由静态初始化被初始化为0了. 所以_count是比_id先初始化的.
+
+
+- 成员初始化器列表(member initializer lists)
+
+    初始化器列表会在构造函数的函数体执行之前完成.
+
+    ``` cpp
+    class A{
+        int id, val;
+        string name;
+    public:
+    // 可以使用():    
+        A(int id, int val, string name): id(id), val(val), name(name) {}
+    // 或者使用{}:
+        A(int id, int val, string name): id{id}, val{val}, name{name} {}
+    // 同样,可以用已初始化的成员变量给未初始化的成员变量初始化:
+        A{(int id): id{id}, val{this->id}, string{"defaultName"} {}
+    };
+    ```
+
+    注意成员初始化器列表的顺序不影响成员被初始化的顺序,它们按照在类定义中的顺序初始化.
+
+- 构造函数内赋值
+
+    尽量少在构造函数内赋值, 减少构造的开销. 也不应把业务代码放在构造函数内.
+
+    由于构造函数体在默认初始化器和初始化器列表之后执行, 因此若有构造函数体, 最终的结果以构造函数体为准.
+
+    ```cpp
+    class MyClass{
+        int _id{_count++};
+        static int _count;
+        string _name;
+    public:
+        MyClass(string name){
+            _name = name+to_string(_id);
+        }
+    }
+
+    int MyClass::_count = 0;
+    ```
+
+### ()和{}去初始化对象
+C++在定义一个对象时, 使用`()`是直接初始化(direct initialization), 使用`{}`是列表初始化(list initialization).
+
+- 使用`{}`的好处:
+    - 禁止窄化转换(narrowing), 比如```int a(3.14)```会初始化a为3(截断, 保留整数), 而```int b{3.14}```会error.
+    - 优先匹配定义了初始化器列表(```std::initializer_list<T>```)的构造函数.
+    - `()`可能被解析成函数声明, `{}`不会;
+    - `{}`会清零内置类型, `()`不会.
+    ``` c++
+    int x{};     // x == 0
+    int y;       // 未初始化（有垃圾值）
+
+    struct S { int a; };
+    S s{};       // s.a == 0
+    ```
+- 使用`{}`的坑:
+    - 容器由于定义了初始化器列表为参的构造函数, 会解析为列表构造
+    ```c++
+    std::vector<int> v1(3, 7); // 3 个元素，每个是 7  -> [7,7,7]
+    std::vector<int> v2{3, 7}; // 两个元素：3 和 7     -> [3,7]int
+    ```
+
+    - ```auto```会将```{}```推导为```std:initializaer_list```
+    ```c++
+    auto a = {1,2,3};   // a 的类型是 std::initializer_list<int>
+    auto b{1};          // b 是 int（C++17 起更稳定；早期标准这里更容易踩坑）
+    ```
+
+
+### 转换构造函数与explict
+构造函数默认时转换构造函数, 允许隐式转换:
+``` cpp
+class MyClass{
+public:
+    MyClass(int val){};
+}
+```
+- 初始化时隐式转换:
+    ```cpp
+    MyClass a = 1;//MyClass a{1}; 
+    ```
+- 函数调用时隐式转换
+    ``` cpp
+    void func(MyClass obj){...}
+
+    func(1);//func(MyClass{1})  
+    ```
+
+禁止此类隐式转换, 需要给构造函数加上```explicit```关键字.
+
+### 委托构造函数
+
+``` cpp
+class class_a {
+public:
+    class_a() {}
+    class_a(string str) : m_string{ str } {}
+    class_a(string str, double dbl) : class_a(str) { m_double = dbl; }
+    double m_double{ 1.0 };
+    string m_string{ m_double < 10.0 ? "alpha" : "beta" };
+};
+
+int main() {
+    class_a a{ "hello", 2.0 };  //expect a.m_double == 2.0, a.m_string == "hello"
+    int y = 4;
+}
+
+```
+
+## 继承
+
+- 构造先基类再派生类, 析构时先派生类再基类.
+
+- 内存布局: 派生类对象的内存空间先是其属于基类的成员变量, 再是属于其自己的成员变量.
+
+### 继承中的访问权限
+- 访问说明符
+    - public 自己(基类),派生类和外部都能访问
+    - protected 只有自己(基类)和派生类能访问, 外部不能访问. 在没有继承时protected等同于private
+    - private 只有自己(基类)能访问, 派生类和外部都不能访问.
+    
+- 继承方式:
+    - 公有继承(public): 范围不变. 基类的private不继承; 基类的protected在派生类还是protected; 基类的public在派生类还是public.
+    - 保护继承(protected): 基类的public在派生类变成protected.
+    - 私有继承(private): 基类的public和protected在派生类变成private.
+
+C++中, ```class```的默认继承方式是私有继承, ```struct```的默认继承方式是公有继承
+
+### 派生类的构造
+
+派生类对象构造时, 先进行重载决议来选择要调用的派生类构造函数, 再根据该构造函数的初始化列表决定调用哪个基类构造函数. 有时候需要指定派生类在不同情况下选用不同的基类构造函数, 若不写明 (采用派生类默认无参构造函数, 或派生类构造函数未写明调用哪个基类构造函数), 则默认调用无参基类构造函数```Base()```.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    Base() {cout << "Default Base Constructor" << endl;}
+    Base(string str) : name(str) {cout<< "Parameterized Base Constructor: " << name << endl;}
+
+    string name{"BaseName"};
+    void testFunc()
+    {
+        cout << "Base::testFunc()" << endl;
+    }
+};
+
+class Derive: public Base
+{
+public:
+    Derive() : Base() {cout<< "Default Derive Constructor" << endl;}
+    Derive(string str) : Base(str){cout<< "Parameterized Derive Constructor: " << name << endl;}
+};
+
+int main()
+{
+    Base Base1;
+    Base Base2{"asdfad"};
+    Derive obj1;
+    Derive obj2{"123123"};
+}
+```
+
+注意这里不是委托构造, 而是基类子对象初始化(base-class subobject initialization), 也就是在派生类构造函数的成员初始化列表里指定用哪个 Base 构造函数来构造 派生类对象内部的那一份 Base 部分。
+
+### 继承中同名的成员变量和函数
+
+- 同名成员变量和成员函数, 优先访问派生类的;
+
+若一定要访问基类的同名成员变量/函数, 在成员变量名前加作用域限定符(```基类名::成员变量名```).
+
+``` cpp
+class Base{
+public:
+    string name{"BaseName"};
+    void testFunc(){
+        cout << "Base::testFunc()" <<endl;
+    }
+}
+
+class Derive : public Base{
+public:
+    string name{"DeriveName"};
+    void testFunc(){
+        cout << "Derive::testFunc()" <<endl;
+    }
+    void printBase(){
+        cout << "Base = "<< Base::name << endl;
+    }
+}
+
+int main(){
+    Derive a;
+    cout << a.name << endl; // DeriveName
+
+    cout << a.Base::name << endl; // BaseName
+
+    a.printBase(); // Base = BaseName
+
+    cout << a.testFunc() << endl; // Derive::testFunc()
+
+    cout << a.Base::testFunc() << endl; // Base::testFunc()
+}
+```
+注意有继承关系的类的同名函数并非重写(override), 重写概念只适用于使用虚方法时派生类的方法重写了基类的虚方法.
+
+## 多态
+多态:同一个方法的行为随上下文而异. 多态的实现可基于两种机制: 
+1. 在派生类中重新定义基类的方法(即上文"继承中同名的成员变量和函数");
+2. 使用虚(virtual)方法, 有虚方法的继承称为虚继承.
+
+### 虚继承
+
+#### 虚方法
+
+**在基类方法的声明中使用关键字virtual, 则该方法在基类以及所有的派生类的中都是虚方法.**
+```cpp
+class Base{
+public:
+    int id0{0}; 
+    string name{"base"};
+    
+    Base(string str, int id):name{str}, id0{id} {}
+    virtual void showName(){
+        cout << "Base Name " << name <<endl;
+    }
+    void showNameNonVirtual(){
+        cout << "Base Name " << name <<endl;
+    }
+};
+
+class Derive1 : public Base{
+public:
+    int id1{1};
+
+    Derive1(string str, int id): Base(str, id) {}
+    virtual void showName(){
+        cout << "Derive1 Name " << name <<endl;
+    }
+    void showNameNonVirtual(){
+        cout << "Derive1 Name " << name <<endl;
+    }
+};
+
+class Derive2 : public Derive1{
+public:
+    int id2{2};
+
+    Derive2(string str, int id): Derive1(str, id) {}
+    void showName(){
+        cout << "Derive2 Name " << name <<endl;
+    }
+};
+
+```
+上述```Base::showName()```, ```Derive1::showName()```, , ```Derive2::showName()```都是虚方法;
+而```Base::showNameNonVirtual()```,```Derive1::showNameNonVirtual()```,```Derive2::showNameNonVirtual()```不是虚方法. 
+
+#### 静态绑定和动态绑定
+
+函数作为一个片段存在于内存的代码区, 一般而言, 将函数调用解释为保存上下文并让程序计数器跳转到函数的起始地址, 这被称为绑定(binding, 或称联编). 静态绑定(static binding, 又称静态联编或early binding早期联编), 是指编译器在编译阶段就把函数调用解释为跳转到一个固定的函数起始地址. 而动态绑定(dynamci binding, 又称动态联编/晚期联编)是指, 在编译阶段不能确定函数调用使用哪个地址, 需要在运行时确定, 所以编译器生成的是"在运行时选择跳转到正确的函数的代码". 
+
+#### 继承类型的指针和引用类型的向上强制转换(upcasting)
+
+对于一般类型, 在不使用显式类型转换时, C++并不允许将一种类型的地址赋值给另一类型的指针, 也不允许将一种类型的引用指向另一种类型. 
+
+**C++允许派生类对象的地址赋值给基类指针, 也允许基类的引用类型去引用一个派生类对象, 这两种情况下是默认进行隐式类型转换**. 这被称为向上强制转换(upcasting).
+
+这意味着, **一个形参是基类引用/基类指针类型时, 可以传入派生类对象/派生类对象地址**.
+
+#### 虚方法实现多态
+
+**当通过指针或引用调用对象的成员函数, 且成员函数为虚方法, 则将使用动态绑定; 除此之外的情况使用静态绑定.**
+
+具体而言, 当使用静态绑定时, 编译器通过字面的对象/指针/引用类型调用对应类的成员函数. 而使用动态绑定时, 编译器通过指针/引用所具体指向的对象类型调用成员函数.
+
+``` cpp
+void funcP(Base *p){
+    p->showName();
+}
+
+void funcR(Base &r){
+    r.showName();
+}
+
+void funcV(Base val){
+    val.showName();
+    if((val.name).find("Derive")!=string::npos){
+        //cout << "id1= "<< val.id1<<endl;//无法通过编译
+        //error: 'class Base' has no member named 'id1';
+    }
+}
+
+int main(){
+    Base obj0{"BaseObj", 0};
+    Derive1 obj1{"DeriveObj", 1};
+
+    funcP(&obj0);
+    funcP(&obj1);
+    funcR(obj0);
+    funcR(obj1);
+    funcV(obj0);
+    funcV(obj1);
+}
+
+```
+结果: 
+```
+Base Name BaseObj
+Derive1 Name DeriveObj
+Base Name BaseObj
+Derive1 Name DeriveObj
+Base Name BaseObj
+Base Name DeriveObj
+```
+可见使用指针或引用调用虚方法是, 虽然形参都是Base类, 但是调用了指向的具体对象的类型的方法. 且在按值传递时, 由于Base类没有id1成员变量, id1丢失了.
+
+若我们将funcP, funcR, funcV的showName()都改为showNameNonVirtual(), 结果为:
+```
+Base Name BaseObj
+Base Name DeriveObj
+Base Name BaseObj
+Base Name DeriveObj
+Base Name BaseObj
+Base Name DeriveObj
+```
+可见若不使用虚方法而是使用同名方法, 将采用静态绑定, 不论传入基类Base还是派生类Derive1的对象, 均按照形参类型绑定到Base类的showNameNonVirtual()函数上.
+
+
+#### 虚函数表
+
+定义了虚方法的类都有虚函数表
+
+![虚函数表的机制(摘自C++ PrimerPlus)](./images/virtualFuncTable.png)
+
+
