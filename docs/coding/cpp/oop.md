@@ -697,52 +697,53 @@ dtor XThread
     2. 需要高度受限的接口与很好的封装: 继承会暴露不该暴露的能力, "让基类的成员函数func在派生类中禁用"是不可行的且违背继承本意的. 
     不论是声明private还是delete都无法阻止某个基类成员函数被访问, 这可以利用向上强制转换(upcasting)或者显式调用Base::func来做到:
 
-    ``` c++
-    #include <iostream>
+        ``` c++
+        #include <iostream>
 
-    struct Deque {
-        void push_front(int)    { std::cout << "Deque::push_front(int)\n"; }
-        void push_front(double) { std::cout << "Deque::push_front(double)\n"; }
-        void push_back(int)     { std::cout << "Deque::push_back(int)\n"; }
-    };
+        struct Deque {
+            void push_front(int)    { std::cout << "Deque::push_front(int)\n"; }
+            void push_front(double) { std::cout << "Deque::push_front(double)\n"; }
+            void push_back(int)     { std::cout << "Deque::push_back(int)\n"; }
+        };
 
-    // 方案1：在派生类里“禁用/删除”某个接口
-    struct Queue_Delete : public Deque {
-        using Deque::push_front;      // 把基类重载集合引入（否则会被隐藏）
-        void push_front(int) = delete; // 试图禁用 int 版本（队列不想要）
-    };
+        // 方案1：在派生类里“禁用/删除”某个接口
+        struct Queue_Delete : public Deque {
+            using Deque::push_front;      // 把基类重载集合引入（否则会被隐藏）
+            void push_front(int) = delete; // 试图禁用 int 版本（队列不想要）
+        };
 
-    // 方案2：在派生类里“私有化”某个接口
-    struct Queue_Private : public Deque {
-    private:
-        using Deque::push_front;  // 只是在 Queue_Private 的作用域里变成 private
-    public:
-        using Deque::push_back;
-    };
+        // 方案2：在派生类里“私有化”某个接口
+        struct Queue_Private : public Deque {
+        private:
+            using Deque::push_front;  // 只是在 Queue_Private 的作用域里变成 private
+        public:
+            using Deque::push_back;
+        };
 
-    int main() {
-        std::cout << "=== delete 方案 ===\n";
-        Queue_Delete q1;
-        q1.push_back(1);
+        int main() {
+            std::cout << "=== delete 方案 ===\n";
+            Queue_Delete q1;
+            q1.push_back(1);
 
-        // q1.push_front(1);     // 编译期报错：已 delete
-        q1.push_front(3.14);     // OK：double 版本仍可用
+            // q1.push_front(1);     // 编译期报错：已 delete
+            q1.push_front(3.14);     // OK：double 版本仍可用
 
-        Deque& b1 = q1;          // 关键：上行转换
-        b1.push_front(1);        // OK！直接调用基类接口（队列不变量被破坏）
-        q1.Deque::push_front(1); // OK！显式限定到基类作用域，同样绕过（不变量被破坏）
+            Deque& b1 = q1;          // 关键：上行转换
+            b1.push_front(1);        // OK！直接调用基类接口（队列不变量被破坏）
+            q1.Deque::push_front(1); // OK！显式限定到基类作用域，同样绕过（不变量被破坏）
 
-        std::cout << "\n=== private 方案 ===\n";
-        Queue_Private q2;
-        q2.push_back(2);
+            std::cout << "\n=== private 方案 ===\n";
+            Queue_Private q2;
+            q2.push_back(2);
 
-        // q2.push_front(2);     // 编译期报错：在派生类作用域里是 private
+            // q2.push_front(2);     // 编译期报错：在派生类作用域里是 private
 
-        Deque& b2 = q2;          // 再次上行转换
-        b2.push_front(2);        // OK！仍然能从基类视角调用
-        q2.Deque::push_front(2); // OK！显式限定到基类作用域也能调用
-    }
-    ```
+            Deque& b2 = q2;          // 再次上行转换
+            b2.push_front(2);        // OK！仍然能从基类视角调用
+            q2.Deque::push_front(2); // OK！显式限定到基类作用域也能调用
+        }
+        ```
+
 
     3. 希望未来保持底层的可替换性: 组合本质上只是一个接口类, 当我需要换掉组合内部的类, 只需要改组合类的定义而无需改变任何业务代码, 因为我们没有直接使用组合内部的类的功能. 而若使用继承, 我们很可能在业务代码里使用了基类的功能, 换掉基类则很可能需要修改业务代码.
 
