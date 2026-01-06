@@ -7,9 +7,57 @@
 - 给成员变量加前缀或后缀下划线, 以示与全局变量的区分.
 - 对对象取地址就是对象的this指针.
 - 对象本身(空对象)占>=1字节的内存(绝大多数实现为==1字节), 因为即便是两个空对象也需要有不同的地址. 但有时候内存对齐(例如4字节对齐)会放大空对象的大小.
-## 常量对象
 
+## const作用于对象, 成员函数和成员变量
+
+- 当const作用于一个对象
+    obj 的类型是 const T，意味着: 
+    - 不能通过 obj 修改其非 mutable 的子对象（非静态数据成员等）; 
+    - 只能调用 T 的 const 成员函数（以及 const/const volatile 更严格版本）; 
+    - 不能把 obj 绑定到 T&（非常量左值引用），但可绑定到 const T&。
+
+- 当const作用于成员函数声明
+    成员函数的 cv 限定会改变 this 的类型，从而限制函数体内对对象的修改能力，并参与重载决议.
+    从语义上, 一个const成员函数声明该函数不会修改调用对象本身.
+    对类 X 的非静态成员函数：
+    - void f(); 中：this 的类型是 X* const
+    - void f() const; 中：this 的类型是 const X* const
+
+    注意这里有两层const, 指针本身是 const（不能在成员函数里给 this 重新赋值）。const 出现在 *this 的指向类型上时，才意味着“不能修改对象状态”（除 mutable 之外）
+
+    const 成员函数内：不能修改非 mutable 的非静态数据成员。只能调用同样满足 const 约束的成员函数(即 g() const )
+
+- 当const作用于成员变量声明
+    例：struct X { const int a; };
+
+    每个 X 对象里都有一个 a，其值在构造完成后不可再赋值。必须在构造函数成员初始化列表或类内初始化器中初始化。
+    含 const 非静态成员的类型，拷贝/移动赋值运算符往往会被隐式删除，因为无法给 const 成员再赋值。
+
+### 常量const对象
 常量对象只能调用const成员函数, 非const成员函数被视为可能修改对象状态.
+```cpp
+
+class A{
+private:
+    int val;
+public:
+    int GetVal() {return val};
+};
+
+int main()
+{
+    A a{1};
+    const A aa{2};
+
+    cout << a.GetVal() <<endl;
+
+    //cout << aa.GetVal() <<endl; 
+    //error: passing 'const A' as 'this' argument discards qualifiers [-fpermissive]
+}
+```
+因此在可能用到常量对象时, 需要注意也实现const成员函数.
+
+在有对象的组合时, 需要注意维护const语义的传递, 即一个常量对象的内部对象, 我们也不希望其能被修改, 见后文[组合](#组合-has-a)
 
 ## 静态成员变量和静态成员函数
 
