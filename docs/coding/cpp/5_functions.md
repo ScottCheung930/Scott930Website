@@ -103,9 +103,9 @@ int main(int argc, char const *argv[])
     return 0;
 }
  
-void func_2(int val_1 ,int val_2)func_1();
+void func_2(int val_1 ,int val_2)
 {
-    cout << val_1 << endl;
+    cout << val_1 <<val_e << endl;
 }
 ```
 

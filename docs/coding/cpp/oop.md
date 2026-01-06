@@ -7,6 +7,9 @@
 - 给成员变量加前缀或后缀下划线, 以示与全局变量的区分.
 - 对对象取地址就是对象的this指针.
 - 对象本身(空对象)占>=1字节的内存(绝大多数实现为==1字节), 因为即便是两个空对象也需要有不同的地址. 但有时候内存对齐(例如4字节对齐)会放大空对象的大小.
+## 常量对象
+
+常量对象只能调用const成员函数, 非const成员函数被视为可能修改对象状态.
 
 ## 静态成员变量和静态成员函数
 
@@ -745,13 +748,96 @@ dtor XThread
         ```
 
 
-    3. 希望未来保持底层的可替换性: 组合本质上只是一个接口类, 当我需要换掉组合内部的类, 只需要改组合类的定义而无需改变任何业务代码, 因为我们没有直接使用组合内部的类的功能. 而若使用继承, 我们很可能在业务代码里使用了基类的功能, 换掉基类则很可能需要修改业务代码.
+    3. 希望未来保持底层的可替换性: 组合是一种接口, 当我需要换掉组合内部的类, 只需要改组合类的定义而无需改变任何业务代码, 因为我们没有直接使用组合内部的类的功能. 而若使用继承, 我们很可能在业务代码里使用了基类的功能, 换掉基类则很可能需要修改业务代码.
 
     一个例子是标准库的queue和deque, queue不是一种deque因为不满足deque的双端性质, queue希望严格FIFO行为不希望用户调用push_front, queue在底层使用deque时需要限制接口而非扩展接口, queue希望在底层能够替换为list以适配某些场景. 所以queue和deque是组合关系.
 
 ### 工厂类
+Logger与LogFac之间是组合关系.
+```c++
+class Logger
+{
+public:
+    Logger() {cout << "Create Logger\n";}
+    ~Logger(){cout << "Drop Logger\n";}
+};
+
+class LogFac //工厂 单件模式 私有化构造函数
+{
+public:
+    static LogFac& Instance(){
+        static LogFac fac;
+        return fac;
+    }
+
+    Logger& GetLogger() { return logger_; }//返回Logger类的引用, 避免拷贝构造.
+    const Logger& GetLogger() const{ return logger_; }//为什么要有const? 因为当LogFac是const对象时, 其只能访问const函数(确保不会修改对象自身).且因为Logger作为const对象的一部分自然也必须是const. 
+
+    ~LogFac(){cout << "Drop LogFac\n";}
+private:
+    LogFac() {cout << "Create LogFac\n";}
+    Logger logger_;
+};
+
+int main(){
+    LogFac& fac = LogFac::Instance();
+    Logger& lg  = fac.GetLogger();
+}
+```
 
 
+## 委托
+一个类包含另一个类的引用或指针. 委托是一种特殊的的组合.
 
-## 委托 
-一个类包含另一个类的引用或指针
+- 组合更强调 **"组成关系"(ownership)** 与 **"生命周期绑定"**, 组合的对象是值语义/实体语义的, 其实现往往是固定的, 没有动态绑定和虚函数调用等. 其"has a"的语义更明确.
+
+- 委托更强调 **"职责转交"** 与 **"动态可替换"**. 委托常需要在**运行时**切换行为, 常用于实现某种可替换的外部能力, 且可以很容易地通过新增一个子类(而非修改原类型)来进行扩展.
+
+``` cpp
+//接口类
+class LogOutput
+{
+public://日志输出
+    virtual void Output(const string& log) = 0;
+    //纯虚函数, 常引用传参
+};
+
+class LogConsoleOutput:public LogOutput
+{
+public:
+    void Output(const string& log) override{
+        cout << log <<endl;
+    }
+};
+
+class LogFileOutput:public LogOutput
+{
+    ... ...
+};
+
+class Logger{
+public:
+    Logger() {cout << "Create Logger\n";}
+    ~Logger(){
+        delete output_;          //注意有指针要记得delete!
+        output_ = nullptr;       //delete之后防止悬空
+        cout << "Drop Logger\n";
+    }
+    void Write(const string& log){
+        output_->Output(log);
+    }
+    // 设置委托
+    void SetOutput(LogOutput* out) {output_ = out;}
+private:
+    LogOutput* output_{nullptr}; //指针要初始化!
+};
+
+int main(){
+    LogFac& fac = LogFac::Instance();
+    Logger& logger = fac.GetLogger();
+    logger.SetOutput(new LogConsoleOutput());
+    logger.Write("test console log");
+};
+```
+
+通过委托, logger可以调用不同的Output后端. 虽然这里使用了```new LogConsoleOutput()```来进行配置, 实际上可以使用配置文件, 从而更加彻底地解耦代码和配置. 当我们需要扩展一种输出设备, 也只需新增一个LogOutput的子类, 不需要对Logger类进行任何修改, 这对应了面向对象开发的"开闭原则(Open Close Principle)", 即对扩展开放, 对修改关闭.

@@ -9,6 +9,18 @@
     ```2>```重定向stderr,
     ```>```换成```>>```: 覆写文件换成在文件尾部追加
 
+## 继承关系
+
+[下图]给出了输入输出流的模板类的继承关系, ```CharT```可以适配各种基本字符类型
+![io_basic_library](images/io_basic_library.png)
+
+
+对于最常用的基本字符类型(```char```, ```wchar_t```), C++也提供了单独的typedef, 最常用的```char```字符类型的输入输出库如下图
+[下图](https://cplusplus.com/reference/iolibrary/)所示.
+![io_library](images/io_library.png)
+
+注意派生类具有基类的性质, 所以ofstream会具有ostream的所有性质, 在介绍时不赘述.
+
 ## ostream
 ostream是一个类, cout是预定义的ostream类的对象
 cerr和clog也是ostream类的对象, cerr无缓冲区(实际有, 但只是每次都flush()), clog有缓冲区
@@ -18,7 +30,9 @@ cerr和clog也是ostream类的对象, cerr无缓冲区(实际有, 但只是每�
 ### fmtflags
 
 C++用bitmask表示各种格式控制开关, 而整体的掩码可以通过```os.flags()```获得.```std::ios::fmtflags```是一个bitmask类型,  ```ios```被包含在```iostream```里. fmtflags包含不同功能的几个字段, 可以通过```cout.setf```直接设置某个字段的bitmask, 比如可以通过:
+
 - ```std::cout.setf(std::ios::hex, std::ios::basefield);```把进制字段basefield 清空，再置表示16进制的比特位.
+
 - ```std::cout.setf(std::ios::hex);```按位或上表示16进制的比特位(没有把其它位置零, 可能冲突).
 
 但一般不会直接操纵bitmask, 而是通过对应的**操纵子(manipulator)**实现, 例如上述设置hex的操作等价于 ```cout << hex```. 这里是```<<```被重载, 使得其接受下一个操作数```hex```为函数指针, 再调用hex函数, 而hex函数就包装了```setf(std::ios::hex, std::ios::basefield)```.
@@ -163,6 +177,8 @@ void myPrint(std::ostream& os, double x) {
 
 
 ## istream
+同样的, cin是istream类的预定义的对象.
+
 ### 整行输入 ```cin.getline()```或```string::getline()```
 - 作为```char[]```输入: ```cin.getline(char* , streamsize )```
     参数为C风格字符数组和最大输入长度
@@ -204,6 +220,8 @@ for(;;){
 ```
 
 ### cin错误处理
+
+cin作为istream类的预定义对象, 其成员函数也将适用于istream的派生类, 例如后文的ifstream, fstream, istringstream, stringstream.
 
 #### cin.rdstate()
 ```ios::iostate rdstate()```是输入输出流的一组状态位, 其包含以下标志位:
@@ -287,7 +305,7 @@ for(;;){
 ## stringstream
 ```#include <sstream>```
 
-```stringstream```继承于```basic_iostream```, 支持cout和cin的绝大多数用法, 只是不再绑定终端+缓冲区(比如在stringstream中插入endl, 只是插入一个换行, 因为没有刷新缓冲区的概念)
+```stringstream```继承于```iostream```, 支持cout和cin的绝大多数用法, 只是不再绑定终端+缓冲区(比如在stringstream中插入endl, 只是插入一个换行, 因为没有刷新缓冲区的概念)
 
 应用场景: 
 1. 不是通过设备输入输出, 而是通过字符串, 比如通过网络发送/接收string类的消息体并解析, 这种消息体可能包含很复杂的格式.
@@ -481,15 +499,15 @@ int main(){
 
 ## streambuf
 
-```std::basic_streambuf```是缓冲区的底层类,与具体设备进行交互,管理缓冲区. 其内部维护读写指针, 并实现了一组虚函数如```overflow()```, ```underflow```等用来在缓冲区写满/读完时触发对设备的操作.
+```std::streambuf```是缓冲区的底层类,与具体设备进行交互,管理缓冲区. 其内部维护读写指针, 并实现了一组虚函数如```overflow()```, ```underflow```等用来在缓冲区写满/读完时触发对设备的操作.
 
-```std::basic_streambuf```作为基类, 而对于不同的读写设备(文件/字符串)有不同的派生类. 当需要对其它类型的输入输出设备进行操作时(例如直接输出到socket), 也可以自己实现一个继承```basic_streambuf```的类.
+```std::streambuf```作为基类, 而对于不同的读写设备(文件/字符串)有不同的派生类. 当需要对其它类型的输入输出设备进行操作时(例如直接输出到socket), 也可以自己实现一个继承```streambuf```的类.
 
 我们可以通过改变```std::istream``` / ```std::ostream``` / ```std::iostream```等类内部的```stream_buf```来实现重定向.
 
 ### 实现一个可切换输出设备(终端/文件)的static输出流
 
-#### ```std::basic_ios::rdbuf()```
+#### ```std::ios::rdbuf()```
 
 无参数时, 返回流的缓冲区指针
 ``` c++
@@ -507,7 +525,7 @@ std::streambuf* fileBuf = std::cout.rdbuf();
 std::cout.rdbuf(fileBuf); 
 ```
 
-注意, ```std::basic_ios::set_rdbuf()```也是替换streambuf指针, 但它不会清除错误状态(```rdstate```). 同时它是```protected```, 所以只能在```basic_ios```的派生类的成员函数里被调用.
+注意, ```std::ios::set_rdbuf()```也是替换streambuf指针, 但它不会清除错误状态(```rdstate```). 同时它是```protected```, 所以只能在```ios```的派生类的成员函数里被调用.
 
 #### 具体实现
 
