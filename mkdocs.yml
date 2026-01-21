@@ -1,3 +1,7 @@
+# 依赖见requirements.txt
+# 使用git submodule管理mkdocs material
+# 使用pip install -e mkdocs-material来安装mkdocs material
+
 site_name: Scott930
 site_url: https://scottcheung930.github.io/Scott930Website/
 
