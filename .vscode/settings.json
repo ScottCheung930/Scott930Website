@@ -81,5 +81,5 @@
         "valarray": "cpp",
         "variant": "cpp"
     },
-    "python.defaultInterpreterPath": "${workspaceFolder}\\\\.venv\\\\Scripts\\\\python.exe"
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
 }
