@@ -30,7 +30,7 @@ jobs:
       - name: Update index TOC and commit
         run: |
           python -m mkdocs build --clean
-          git add docs/**/index.md
+          git add -A docs
           if git diff --cached --quiet; then
             echo "No TOC changes to commit."
           else
