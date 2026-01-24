@@ -49,6 +49,7 @@ window.addEventListener('load', function () {
     }
 
     function showSchemeToast(date, scheme, isSuggestion) {
+        if (sessionStorage.getItem('auto-scheme-toast-shown') === '1') return;
         const isDark = scheme === 'slate';
         const period = isDark ? '晚上' : '白天';
         const mode = isDark ? '深色' : '浅色';
@@ -97,6 +98,8 @@ window.addEventListener('load', function () {
         toast.appendChild(text);
         toast.appendChild(close);
         document.body.appendChild(toast);
+
+        sessionStorage.setItem('auto-scheme-toast-shown', '1');
 
         setTimeout(() => {
             if (toast.isConnected) toast.remove();
@@ -181,5 +184,4 @@ window.addEventListener('load', function () {
     }
     scheduleNextCheck(now);
 });
-
 

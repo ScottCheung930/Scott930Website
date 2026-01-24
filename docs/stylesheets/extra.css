@@ -74,10 +74,18 @@ nav.md-tabs {
     left: 0;
     right: 0;
     background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10;
 }
 
 nav.md-tabs::before {
     background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10;
+}
+
+/* Ensure palette tooltip appears above the translucent nav bar */
+.md-tooltip,
+.md-tooltip__inner {
+    z-index: 1000;
 }
 
 nav.md-tabs a {
