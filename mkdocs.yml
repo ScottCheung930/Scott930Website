@@ -22,7 +22,7 @@ nav:
         - coding/cpp/5_functions.md
         - coding/cpp/6_compile_and_multifile.md
         - coding/cpp/7_oop.md
-        - coding/cpp/8_cpp_heap_memory.md
+        #- coding/cpp/8_cpp_heap_memory.md
         - coding/cpp/macro.md
   - 杂记:
       - notes/index.md
