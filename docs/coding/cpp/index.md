@@ -11,5 +11,6 @@
 - [函数](5_functions.md)
 - [项目编译流程](6_compile_and_multifile.md)
 - [面向对象](7_oop.md)
+- [C++的堆内存管理特性](8_cpp_heap_memory.md)
 - [宏](macro.md)
 <!-- auto-toc:end -->
