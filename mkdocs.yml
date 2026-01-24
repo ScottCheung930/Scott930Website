@@ -22,6 +22,7 @@ nav:
         - coding/cpp/5_functions.md
         - coding/cpp/6_compile_and_multifile.md
         - coding/cpp/7_oop.md
+        #- coding/cpp/8_cpp_heap_memory.md
         - coding/cpp/macro.md
   - 杂记:
       - notes/index.md
@@ -60,13 +61,15 @@ theme:
   favicon: assets/images/logo.png
   palette: 
     # Palette toggle for light mode
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       toggle:
         icon: material/brightness-7 
         name: Switch to dark mode
 
     # Palette toggle for dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -215,3 +218,6 @@ plugins:
   - search
   - statistics
   - meta
+
+hooks:
+  - tools/mkdocs_hooks.py
