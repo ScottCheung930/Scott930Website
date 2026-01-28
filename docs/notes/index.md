@@ -8,4 +8,5 @@
 - [Cellular systems - 5G and beyond Part 1](lecture/note_CellularSystems-5GandBeyond.md)
 - [Cellular systems - 5G and beyond Part 2](lecture/note_CellularSystems-5GandBeyond_part2.md)
 - [QQ机器人](qqBot/index.md)
+- [摆弄服务器的记录](smtpServer/index.md)
 <!-- auto-toc:end -->
