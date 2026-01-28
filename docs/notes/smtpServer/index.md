@@ -137,6 +137,9 @@ fi
 
 在进行了如上设置后, 为了使CodeX的VSCode插件(安装在服务器端)能够顺畅使用, 还要在VScode中配置http.proxy(在服务器端)![alt text](VScodeconfig.png)
 
+效果如下:
+![alt text](proxy.png)
+
 ## 阿里云服务器+腾讯云邮件推送服务搭建邮件服务器
 在阿里云ECS上, TCP 25端口的出方向是默认被封的, 所以不能直接使用阿里云做ECS服务器.
 
@@ -303,8 +306,9 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-
+效果如下:
+![alt text](mailSent.png)
+![alt text](mailReceived.png)
 ## 目录
 <!-- auto-toc:start -->
 <!-- auto-toc:end -->
