@@ -20,14 +20,20 @@ root@iZbp18go8yddw5y53guhdbZ:/home/yuqizhang/Desktop# ./FlClash-0.8.91-linux-amd
 这个问题是由于没有设置环境变量```DISPLAY```, 可以通过将图形界面的```DISPLAY```设置为ssh终端的```DISPLAY```来解决. 在VNC连接的图形界面打开终端, 通过```echo $DISPLAY```查看到VNC的图形界面为```:0```, 因此在ssh终端中也应设置```$DISPLAY = :0```. 此时若直接访问会显示```Authorization required```, 这与xhost的配置有关. xhost是为X Window系统中控制x服务器访问权限的工具, x服务器是负责Linux系统的GUI绘制渲染和处理GUI输入事件的程序. 因为ssh终端的root用户无权访问图形界面(user用户登录), 所以无法打开. 此时在图形界面的终端中输入```xhost +si:localuser:root```向用户root授予权限即可.
 
 因此, 在我ssh登录的root用户的```~/.bashrc```中添加了如下逻辑, 是的在每次启动root用户的ssh连接时
+
 1. 设置环境变量```DISPLAY=":0"```
+
 2. 使用```ps -a```检查FlClash进程是否存在, 若不存在则运行```/home/yuqizhang/Desktop/FlClash-0.8.91-linux-amd64.AppImage```
+
 3. 如果FlClash启动成功或者已经在运行, 输出“ FlClash SSH bootstrap: FlClash is already running.", 再进行PROXY环境变量设置,而后输出"PROXY setup success"+ 各代理环境变量的代理地址:
+
     ``` bash
-    HTTP_PROXY="http://127.0.0.1:7890" HTTPS_PROXY="$HTTP_PROXY"
+    HTTP_PROXY="http://127.0.0.1:7890"
+    HTTPS_PROXY="$HTTP_PROXY"
     ALL_PROXY="socks5h://127.0.0.1:7890"
     NO_PROXY="localhost,127.0.0.1"
     ```
+
 4. 若FlClash启动失败, 输出"FlClash SSH bootstrap: FlClash lauch fail."并输出"PROXY setup fail."
 
 bash脚本如下:
@@ -132,4 +138,170 @@ fi
 在进行了如上设置后, 为了使CodeX的VSCode插件(安装在服务器端)能够顺畅使用, 还要在VScode中配置http.proxy(在服务器端)![alt text](VScodeconfig.png)
 
 ## 阿里云服务器+腾讯云邮件推送服务搭建邮件服务器
+在阿里云ECS上, TCP 25端口的出方向是默认被封的, 所以不能直接使用阿里云做ECS服务器.
+
+而腾讯云的邮件推送服务有每个账号1000封邮件的免费发送额度, 超出免费额度的部分为按量日结(0.0019元/封), 所以直接在阿里云服务器里登录腾讯云服务器. 用GPT参照腾讯云的[官方文档](https://cloud.tencent.com/document/product/1288/97581)写了个python脚本:
+
+```python
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# export TC_SMTP_PASS="smtp_ZYQ753421"
+
+# python3 send_tencent_smtp.py \
+#  --region hk \
+#  --port 465 \
+#  --to "1826358454@qq.com" \
+#  --subject "Hello via Tencent SMTP relay" \
+#  --text "This is a test email." \
+#  --debug
+
+
+import argparse
+import os
+import ssl
+import smtplib
+import time
+from email.message import EmailMessage
+from email.utils import formataddr, make_msgid
+
+REGION_HOST = {
+    "hk": "smtp.qcloudmail.com",
+    "gz": "gz-smtp.qcloudmail.com",
+    "sg": "sg-smtp.qcloudmail.com",
+}
+
+DEFAULT_FROM = "[邮件域名]"
+
+
+def build_message(from_email, from_name, to_emails, subject, text_body, html_body=None):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = formataddr((from_name, from_email))
+    msg["To"] = ", ".join(to_emails)
+    msg["Message-ID"] = make_msgid()
+
+    if html_body:
+        msg.set_content(text_body or "This message contains HTML content.")
+        msg.add_alternative(html_body, subtype="html")
+    else:
+        msg.set_content(text_body or "")
+
+    return msg
+
+
+def _smtp_send_ssl(host, port, username, password, msg, timeout, debug, context):
+    server = smtplib.SMTP_SSL(host=host, port=port, context=context, timeout=timeout)
+    try:
+        if debug:
+            server.set_debuglevel(1)
+        server.ehlo()
+        server.login(username, password)
+        server.send_message(msg)
+    finally:
+        try:
+            server.quit()
+        except Exception:
+            pass
+
+
+def _smtp_send_starttls(host, port, username, password, msg, timeout, debug, context):
+    server = smtplib.SMTP(host=host, port=port, timeout=timeout)
+    try:
+        if debug:
+            server.set_debuglevel(1)
+        server.ehlo()
+        server.starttls(context=context)
+        server.ehlo()
+        server.login(username, password)
+        server.send_message(msg)
+    finally:
+        try:
+            server.quit()
+        except Exception:
+            pass
+
+
+def send_via_tencent_smtp(host, port, username, password, msg, timeout=120, debug=False, starttls=False):
+    """
+    - 默认：465/587 走 SMTP_SSL（隐式 TLS）
+    - 如指定 --starttls：走 STARTTLS（常用于 587/25）
+    同时做一次“禁用 TLS1.3 / 强制 TLS1.2+ciphers”的重试，以兼容部分服务端。
+    """
+
+    # Attempt 1: default context, and (optionally) disable TLSv1.3
+    ctx1 = ssl.create_default_context()
+    if hasattr(ssl, "OP_NO_TLSv1_3"):
+        ctx1.minimum_version = ssl.TLSVersion.TLSv1_2
+
+    try:
+        if starttls:
+            _smtp_send_starttls(host, port, username, password, msg, timeout, debug, ctx1)
+        else:
+            _smtp_send_ssl(host, port, username, password, msg, timeout, debug, ctx1)
+        return
+    except (TimeoutError, smtplib.SMTPServerDisconnected, ssl.SSLError) as e:
+        if debug:
+            print(f"[warn] First attempt failed: {repr(e)}; retry with TLSv1.2 + conservative ciphers...")
+        time.sleep(2)
+
+    # Attempt 2: force TLSv1.2 + conservative ciphers
+    ctx2 = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    ctx2.set_ciphers("AES128-SHA:AES256-SHA:RC4-SHA:DES-CBC3-SHA:RC4-MD5")
+
+    if starttls:
+        _smtp_send_starttls(host, port, username, password, msg, timeout, debug, ctx2)
+    else:
+        _smtp_send_ssl(host, port, username, password, msg, timeout, debug, ctx2)
+
+
+def main():
+    p = argparse.ArgumentParser(description="Send email via Tencent Cloud Email Delivery SMTP relay.")
+    p.add_argument("--region", choices=REGION_HOST.keys(), default="gz")
+    p.add_argument("--host", default=None, help="Override SMTP host (optional)")
+    p.add_argument("--port", type=int, default=465, help="465/587/25")
+    p.add_argument("--starttls", action="store_true", help="Use STARTTLS instead of implicit TLS (SMTP_SSL).")
+    p.add_argument("--from-email", default=os.getenv("TC_SMTP_USER", DEFAULT_FROM))
+    p.add_argument("--from-name", default=os.getenv("TC_FROM_NAME", "[发件人姓名]"))
+    p.add_argument("--password", default=os.getenv("TC_SMTP_PASS", "[腾讯云SMTP密码]"))
+    p.add_argument("--to", action="append", required=True, help="Recipient email (repeatable)")
+    p.add_argument("--subject", default="Hello via Tencent SMTP relay")
+    p.add_argument("--text", default="This is a test email.")
+    p.add_argument("--html", default=None)
+    p.add_argument("--timeout", type=int, default=120)
+    p.add_argument("--debug", action="store_true")
+    args = p.parse_args()
+
+    host = args.host or REGION_HOST[args.region]
+    if not args.password:
+        raise SystemExit("Missing SMTP password. Use --password or env TC_SMTP_PASS.")
+
+    msg = build_message(
+        from_email=args.from_email.strip(),
+        from_name=args.from_name,
+        to_emails=[t.strip() for t in args.to],
+        subject=args.subject,
+        text_body=args.text,
+        html_body=args.html,
+    )
+
+    send_via_tencent_smtp(
+        host=host,
+        port=args.port,
+        username=args.from_email.strip(),  # Tencent SMTP: username 通常就是发信地址
+        password=args.password,
+        msg=msg,
+        timeout=args.timeout,
+        debug=args.debug,
+        starttls=args.starttls,
+    )
+
+    print(f"OK: sent via {host}:{args.port} (starttls={args.starttls}) to {args.to}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
 
