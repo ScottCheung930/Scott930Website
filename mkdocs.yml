@@ -39,6 +39,8 @@ nav:
         - notes/lecture/note_CellularSystems-5GandBeyond_part2.md
       - QQ机器人:
         - notes/qqBot/index.md
+      - 邮件服务器与服务器VPN配置:
+        - notes/smtpServer/index.md
 theme:
   name: material
   custom_dir: overrides
