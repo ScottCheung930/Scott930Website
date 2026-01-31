@@ -734,7 +734,7 @@ dtor XTask
 dtor XThread
 ```
 
-## 组合 (has a)
+## 设计模式: 组合 (has a)
 一个类A包含另一个类B的对象. 在使用类A的对象时, 不应该直接访问B例如```A.B.func()```, B类对象的所有需要的功能都应该通过A封装一层来访问.
 
 ???+ Note "组合还是继承?"
@@ -802,7 +802,7 @@ dtor XThread
 
     一个例子是标准库的queue和deque, queue不是一种deque因为不满足deque的双端性质, queue希望严格FIFO行为不希望用户调用push_front, queue在底层使用deque时需要限制接口而非扩展接口, queue希望在底层能够替换为list以适配某些场景. 所以queue和deque是组合关系.
 
-### 工厂类
+### 设计模式: 工厂类
 Logger与LogFac之间是组合关系.
 ```c++
 class Logger
@@ -836,10 +836,10 @@ int main(){
 ```
 
 
-## 委托
+## 组合的另一种实现: 委托
 一个类包含另一个类的引用或指针. 委托是一种特殊的的组合.
 
-- 组合更强调 **"组成关系"(ownership)** 与 **"生命周期绑定"**, 组合的对象是值语义/实体语义的, 其实现往往是固定的, 没有动态绑定和虚函数调用等. 其"has a"的语义更明确.
+- 对象组合更强调 **"组成关系"(ownership)** 与 **"生命周期绑定"**, 组合的对象是值语义/实体语义的, 其实现往往是固定的, 没有动态绑定和虚函数调用等. 其"has a"的语义更明确.
 
 - 委托更强调 **"职责转交"** 与 **"动态可替换"**. 委托常需要在**运行时**切换行为, 常用于实现某种可替换的外部能力, 且可以很容易地通过新增一个子类(而非修改原类型)来进行扩展.
 
@@ -891,3 +891,23 @@ int main(){
 ```
 
 通过委托, logger可以调用不同的Output后端. 虽然这里使用了```new LogConsoleOutput()```来进行配置, 实际上可以使用配置文件, 从而更加彻底地解耦代码和配置. 当我们需要扩展一种输出设备, 也只需新增一个LogOutput的子类, 不需要对Logger类进行任何修改, 这对应了面向对象开发的"开闭原则(Open Close Principle)", 即对扩展开放, 对修改关闭.
+
+## 使用继承、组合/委托实现日志类 
+![alt text](uml_graph.png)
+1. 图中, 实线+空心三角形箭头, 箭头指向父类/接口.
+    图中两组继承关系：
+    - `LogFileOutput`、`LogConsoleOutput` 继承 `LogOutput`
+    - `XLogFormat` 继承 `LogFormat`
+    
+    `LogOutput::Output()`、`LogFormat::Format()` 是抽象基类/接口（`virtual ... = 0;`），子类实现具体行为。
+
+2. 图中, 实线 + 实心菱形（黑菱形）, 菱形所在端是“整体/拥有者”，表示强拥有关系(组合).
+    - 整体负责部件生命周期（整体销毁，部件也随之销毁）
+    - 通常对应 C++ 里的成员对象或独占所有权（如 std::unique_ptr）
+
+    图中的两处组合关系:
+    - `Logger` 组合 `LogOutput` 与 `LogFormat`, `Logger` 内部“拥有”一个 `LogOutput` 和一个 `LogFormat`（has-a语义）.由于`LogOutput`与`LogFormat`是可替换的"功能"而非值语义的"组成部件", 所以可以采用委托. 
+    - `LogFac`组合`Logger`, 单例模式, 采用对象组合.
+
+3. 实线 + 普通箭头表示依赖/创建/装配。
+    图里 `LogFac` 向下指向：`LogFileOutput`, `LogConsoleOutput`, `XLogFormat`, 含义是：`LogFac::Init()` 会创建/选择这些具体策略对象，并把它们装配进 `Logger`.
