@@ -309,6 +309,3 @@ if __name__ == "__main__":
 效果如下:
 ![alt text](mailSent.png)
 ![alt text](mailReceived.png)
-## 目录
-<!-- auto-toc:start -->
-<!-- auto-toc:end -->

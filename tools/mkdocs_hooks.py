@@ -167,46 +167,52 @@ def _make_toc_block(items: List[str], current_index: str, docs_root: Path) -> st
     return "\n".join(lines)
 
 
+def _strip_toc_block(text: str) -> str:
+    start = text.find(START_MARKER)
+    end = text.find(END_MARKER)
+    if start == -1 or end == -1 or end <= start:
+        return text
+
+    lines = text.splitlines()
+    start_line = None
+    end_line = None
+    for i, line in enumerate(lines):
+        if START_MARKER in line:
+            start_line = i
+            break
+    for i in range(start_line or 0, len(lines)):
+        if END_MARKER in lines[i]:
+            end_line = i
+            break
+
+    heading_line = (start_line or 0) - 1
+    while heading_line >= 0 and lines[heading_line].strip() == "":
+        heading_line -= 1
+    replace_start_line = (
+        heading_line
+        if heading_line >= 0 and lines[heading_line].startswith("## ")
+        else (start_line or 0)
+    )
+
+    prev_line = replace_start_line - 1
+    while prev_line >= 0 and lines[prev_line].strip() == "":
+        prev_line -= 1
+    if prev_line >= 0 and lines[prev_line].startswith("## "):
+        prev_title = lines[prev_line].strip()
+        if prev_title in {f"## {TOC_TITLE}", "## ??"}:
+            replace_start_line = prev_line
+
+    new_lines = lines[:replace_start_line] + lines[(end_line or len(lines) - 1) + 1 :]
+    return "\n".join(new_lines).rstrip() + "\n"
+
+
 def _update_index_file(path: Path, toc_block: str) -> None:
     text, has_bom = _read_text(path)
     start = text.find(START_MARKER)
     end = text.find(END_MARKER)
     if start != -1 and end != -1 and end > start:
-        lines = text.splitlines()
-        start_line = None
-        end_line = None
-        for i, line in enumerate(lines):
-            if START_MARKER in line:
-                start_line = i
-                break
-        for i in range(start_line or 0, len(lines)):
-            if END_MARKER in lines[i]:
-                end_line = i
-                break
-
-        heading_line = (start_line or 0) - 1
-        while heading_line >= 0 and lines[heading_line].strip() == "":
-            heading_line -= 1
-        replace_start_line = (
-            heading_line
-            if heading_line >= 0 and lines[heading_line].startswith("## ")
-            else (start_line or 0)
-        )
-
-        prev_line = replace_start_line - 1
-        while prev_line >= 0 and lines[prev_line].strip() == "":
-            prev_line -= 1
-        if prev_line >= 0 and lines[prev_line].startswith("## "):
-            prev_title = lines[prev_line].strip()
-            if prev_title in {f"## {TOC_TITLE}", "## ??"}:
-                replace_start_line = prev_line
-
-        new_lines = (
-            lines[:replace_start_line]
-            + toc_block.splitlines()
-            + lines[(end_line or len(lines) - 1) + 1 :]
-        )
-        new_text = "\n".join(new_lines).rstrip() + "\n"
+        stripped = _strip_toc_block(text)
+        new_text = stripped.rstrip() + "\n\n" + toc_block + "\n"
     else:
         new_text = text.rstrip() + "\n\n" + toc_block + "\n"
     _write_text(path, new_text, has_bom)
@@ -221,16 +227,23 @@ def on_pre_build(config):
     nav_root = _parse_nav(mkdocs_text)
     section_map = _build_section_map(nav_root)
 
-    root_index = "index.md"
-    if (docs_root / root_index).exists():
-        section_map.setdefault(root_index, nav_root)
-
     for index_path in sorted(docs_root.rglob("index.md")):
         rel = index_path.relative_to(docs_root).as_posix()
         children = section_map.get(rel)
         if children is None:
+            # No siblings under the same nav group -> no TOC.
+            text, has_bom = _read_text(index_path)
+            stripped = _strip_toc_block(text)
+            if stripped != text:
+                _write_text(index_path, stripped, has_bom)
             continue
         items = _collect_items(children, rel)
+        if not items:
+            text, has_bom = _read_text(index_path)
+            stripped = _strip_toc_block(text)
+            if stripped != text:
+                _write_text(index_path, stripped, has_bom)
+            continue
         toc_block = _make_toc_block(items, rel, docs_root)
         _update_index_file(index_path, toc_block)
 

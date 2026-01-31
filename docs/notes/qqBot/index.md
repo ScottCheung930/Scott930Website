@@ -123,7 +123,3 @@ https://kp.itzdrli.cc是一个比较好的源
 ### 效果
 加了chatluna-image-renderer后还可以渲染代码块为图片~
 >    ![效果](10.jpg)
-
-## 目录
-<!-- auto-toc:start -->
-<!-- auto-toc:end -->
