@@ -82,7 +82,7 @@ String(const String& s){
 
     例如, ```Type obj=func();```, ```func()```的返回值是个临时对象, 此时若能直接把临时对象的资源(堆内存)交给obj, 免去给obj申请内存的操作, 就能降低开销;
 
-???+ Note value catagor: 左值, 纯右值, 将亡值
+???+ Note "value catagor: 左值, 纯右值, 将亡值"
     首先需要明确: 
     1. "value catagory"是独立于"type"的属性; 
     2. "value catagory"是"表达式的类别"而非值的类别("The approach we take to provide guaranteed copy elision is to tweak the definition of C++'s 'glvalue' and 'prvalue' [value categories (which, counterintuitively, categorize expressions, not values).](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0135r0.html)")
